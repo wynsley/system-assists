@@ -24,4 +24,7 @@
 # Package lock files
 package-lock.json
 yarn.lock
-/src/generated/prisma
+
+#Custom ignores
+/prisma/migrations
+/prisma/generated
