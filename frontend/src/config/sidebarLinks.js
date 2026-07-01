@@ -42,8 +42,8 @@ export const menuByRole = {
           href: "/admin/register-user",
         },
         {
-          text: "Códigos QR",
-          href: "/admin/generateQR",
+          text: "Gestión Académica",
+          href: "/admin/academic-management",
         },
       ],
     },

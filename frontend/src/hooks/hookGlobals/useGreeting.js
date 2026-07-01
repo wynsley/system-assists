@@ -1,15 +1,13 @@
 import { useAuth } from "./useAuth";
+import { ROLE_LABELS } from "../../config/roleLabels";
 
 export const useGreeting = () => {
 
   const { userData } = useAuth();
   const role = userData?.role || "ADMIN";
+  console.log(userData?.name)
 
-  const greetingLabel = {
-    ADMIN: "Administrador",
-    AUXILIAR: "Auxiliar",
-    PARENT: "Padre de familia",
-  }[role] || "Usuario";
+  const greetingLabel = ROLE_LABELS[role] || "Usuario";
 
   const hour = new Date().getHours();
   const greetingHour =

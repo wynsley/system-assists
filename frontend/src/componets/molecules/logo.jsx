@@ -6,11 +6,11 @@ function Logo({ variant = 'default' }) {
 
   const navigate = useNavigate()
   
-  const {user} = useAuth()
+  const {userData} = useAuth()
 
   const handleNavigate = () => {
-    if (!user) return;
-    const path = ROLE_ROUTES[user.role];
+    if (!userData) return;
+    const path = ROLE_ROUTES[userData.role];
     console.log("Path:", path);
     if (path) {
       navigate(path);

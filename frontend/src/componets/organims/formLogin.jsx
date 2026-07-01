@@ -4,7 +4,6 @@ import { Button } from "../atoms/button"
 import { FormItem } from "../molecules/formItems"
 import { useNavigate } from 'react-router-dom'
 import { apiFetch } from "../../helpers/apiFetch"
-import { ValidationLogin } from "../../validations/validatioLogin"
 import { ROLE_ROUTES } from "../../config/dashboardRutes"
 import { useToast } from "../../hooks/hookGlobals/useToast"
 import { authStorage } from "../../helpers/authStorage"
@@ -12,6 +11,7 @@ import { Link } from "../atoms/link"
 import { Title } from "../atoms/title"
 import { useToggle } from "../../hooks/hookModal/useToggle";
 import { useLoading } from "../../hooks/hookGlobals/useLoading";
+import { ValidationLogin } from "../../validations/auth/validatioLogin";
 
 function FormLogin({ onLogin }) {
 
@@ -65,7 +65,7 @@ function FormLogin({ onLogin }) {
       setError(err.message || "Ocurrió un error inesperado");
       showToast(err.message || "No se pudo iniciar sesión", "error");
     } finally {
-      stopLoading;
+      stopLoading();
     }
   };
 
@@ -114,17 +114,16 @@ function FormLogin({ onLogin }) {
         level="h2"
         align="center"
         weight="bold"
-        className="text-center font-bold text-3xl text-gray-800"
       />
 
-      <FormItem formFields={formFields} />
+      <FormItem formFields={formFields} labelSize="medium"/>
 
       <Button
         type='submit'
         variant="primary"
         text={loading ? 'Enviando...' : 'Ingresar'}
         disabled={loading}
-        className="mt-4"
+        className="mt-4 text-[1em]"
       />
 
       <div className="

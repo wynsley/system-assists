@@ -27,8 +27,8 @@ function Paragraph ({
   const sizes = {
     base : "text-base",
     small:  "text-[0.8em] sm:text-[.9em] md:text-[1em]",
-    medium: "text-[.5em] xs:text-[.8em] sm:text-[.9em] md:text-[1em] lg:text-[1.1em]" ,
-    large:  "text-[.9em] lg:text-[1.2em] xl:text-[1.3em]",
+    medium: "text-[.8em] sm:text-[.9em] md:text-[1em] lg:text-[1.1em]" ,
+    large:  "text-[.9em] lg:text-[1.2em] xl:text-[1.2em]",
     slogan : " text-[1.2em] lg:text-[1.2em] xl:text-[1.5em]",
   };
 

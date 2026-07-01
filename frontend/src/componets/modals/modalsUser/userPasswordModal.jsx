@@ -9,7 +9,7 @@ import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useToggle } from "../../../hooks/hookModal/useToggle";
 import { useLoading } from "../../../hooks/hookGlobals/useLoading";
 import { apiFetch } from "../../../helpers/apiFetch";
-import { ValidationChangePassword } from "../../../validations/validationChangePassword";
+import { ValidationChangePassword } from "../../../validations/auth/validationChangePassword";
 
 function ChangePasswordModal({ closeModal }) {
   const [oldPassword, setOldPassword] = useState("");
@@ -125,7 +125,6 @@ function ChangePasswordModal({ closeModal }) {
           />
         </div>
 
-        {error && <span className="text-sm text-red-500">{error}</span>}
         {error && <span className="text-sm text-red-500">{error}</span>}
 
         <FormItem formFields={formFields} inputSize="medium" />

@@ -4,7 +4,7 @@ import { Logo } from "../logo"
 
 function DescriptionLogin() {
   const welcome = 'Le damos la bienvenida a '
-  const title = '"Coronel Cortengana"'
+  const title = '"CORONEL CORTEGANA"'
   const description = `"Donde la educación, la disciplina y el compromiso forman el  futuro de nuestros estudiantes"`
 
   return (
@@ -17,6 +17,7 @@ function DescriptionLogin() {
           <Paragraph
             text={welcome}
             variant="secondary"
+            size="large"
           />
           <Title
             level="h2"
@@ -29,6 +30,7 @@ function DescriptionLogin() {
       </div>
       <Paragraph
         text={description}
+        size="large"
         variant="secondary"
       />
     </div>

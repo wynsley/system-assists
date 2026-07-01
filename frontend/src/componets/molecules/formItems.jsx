@@ -11,7 +11,7 @@ function FormItem({
   selectVariant = 'default',
   selectSize = 'small',
   labelSize = 'small',
-  required
+  required = false
 }) {
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -60,9 +60,9 @@ function FormItem({
                       variant={inputVariant}
                       align={inputAlign}
                       size={inputSize}
-                      icon={item.icon}
+                      icon={field.icon}
                       required={required}
-                      onIconClick={item.onIconClick}
+                      onIconClick={field.onIconClick}
                     />
                   )}
 

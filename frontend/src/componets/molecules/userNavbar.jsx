@@ -21,9 +21,9 @@ function UserNavbar ({
           </div>
         )}
 
-        <span className="text-sm font-medium text-white sm:block md:hidden lg:block ">
+        <p className="text-sm font-medium text-white sm:block md:hidden lg:block  truncate max-w-30">
           {user.name}
-        </span>
+        </p>
 
         <IoChevronDownSharp
           size={16}

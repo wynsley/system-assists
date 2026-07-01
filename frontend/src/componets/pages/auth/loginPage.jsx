@@ -16,11 +16,7 @@ export const LoginPage = ({ onLogin }) => {
       </div>
 
       {/* RIGHT */}
-      <div className="flex-1 flex items-center justify-center px-6 py-10 relative overflow-hidden bg-white">
-
-        <div className="absolute inset-0 bg-[radial-gradient(500px_circle_at_0%_0%,rgba(166,166,166,0.45),transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(600px_circle_at_100%_100%,rgba(3,45,60,0.12),transparent_70%)]" />
-
+      <div className="flex-1 flex items-center justify-center px-6  relative overflow-hidden bg-white">
         <FormLogin
           onLogin={onLogin}
         />

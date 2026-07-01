@@ -22,7 +22,7 @@ import { NotificationsAssistantPage } from "./componets/pages/notifiacitons/noti
 import { DashboardAdminPage } from "./componets/pages/dashboard/dashboardAdmin";
 import { RegisterUser } from "./componets/pages/admin/registerUserPage";
 import { RegisterStudent } from "./componets/pages/admin/registerStudentPage";
-import { GenerateQRPage } from "./componets/pages/admin/generateQRPage";
+import { AcademicManagement } from "./componets/pages/admin/academicManagement";
 // Utils
 import { ProtectedRoute } from "./routes/protectedRoute";
 import { ROLE_ROUTES } from "./config/dashboardRutes";
@@ -208,14 +208,14 @@ function App() {
         />
 
         <Route
-          path="/admin/generateQR"
+          path="/admin/academic-management"
           element={
             <ProtectedRoute
               isAuthenticated={isAuthenticated}
               userRole={userData.role}
               allowedRoles={["ADMIN"]}
             >
-              <GenerateQRPage />
+              <AcademicManagement />
             </ProtectedRoute>
           }
         />

@@ -1,12 +1,11 @@
 import { FaUserPlus } from "react-icons/fa6";
 import { TitleAndDescaription } from "../../molecules/titleandDescription";
-import { useModal } from "../../../hooks/hookModal/useModal";
 import { Button } from "../../atoms/button";
-
-
+//hooks
+import { useModal } from "../../../hooks/hookModal/useModal";
 // modales
 import { ModalOptionsRegister } from "../../modals/adminRegisters/modalOptionsRegister";
-import { ModalRegisterStudents } from "../../modals/adminRegisters/modalRegisterStudents";
+import { ModalRegisterStudent } from "../../modals/adminRegisters/modalRegisterStudents";
 
 function HeaderRegisterStudent() {
 
@@ -24,9 +23,11 @@ function HeaderRegisterStudent() {
     modalRegisterStudents.openModal();
   };
 
+  //Arbir el modal de crear grado y secciones
+  
   return (
-    <section className="mt-6 flex items-center justify-between
-      w-[96%] md:w-[90%] md:max-w-6xl mx-auto relative"
+    <section className="mt-8 flex items-center justify-between
+      w-[96%] md:w-[90%] md:max-w-7xl mx-auto relative"
     >
       <TitleAndDescaription
         title="Registro de Estudiantes"
@@ -34,8 +35,7 @@ function HeaderRegisterStudent() {
         weight="bold"
         description="Gestiona los estudiantes de la institución"
       />
-
-      <Button
+        <Button
         onClick={handleOpenOptions}
         variant="primary"
         className="flex items-center gap-2  "
@@ -43,7 +43,6 @@ function HeaderRegisterStudent() {
         <FaUserPlus className="size-5" />
         Nuevo Estudiante
       </Button>
-
           {modalOptionsRegister.isOpen && (
               <ModalOptionsRegister
                 closeModal={modalOptionsRegister.closeModal}
@@ -52,7 +51,7 @@ function HeaderRegisterStudent() {
           )}
 
           {modalRegisterStudents.isOpen && (
-              <ModalRegisterStudents
+              <ModalRegisterStudent
                 closeModal={modalRegisterStudents.closeModal}
               />
           )}

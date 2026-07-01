@@ -38,11 +38,11 @@ export function AuthProvider({ children }) {
         if (res.ok && data?.user) {
           setUserData(data.user);
           setIsAuthenticated(true);
-          authStorage.saveUser(data.user); // 👈 ya no localStorage directo
+          authStorage.saveUser(data.user); //  ya no localStorage directo
         } else {
           setUserData(null);
           setIsAuthenticated(false);
-          authStorage.clear(); // 👈 limpia TODO (user, isAuthenticated, lastActivity)
+          authStorage.clear(); //  limpia TODO (user, isAuthenticated, lastActivity)
         }
       } catch (err) {
         setUserData(null);
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
   const login = useCallback((user) => {
     setIsAuthenticated(true);
     setUserData(user);
-    authStorage.saveUser(user); // 👈 ya no localStorage directo
+    authStorage.saveUser(user); //  ya no localStorage directo
   }, []);
 
   const logout = useCallback(async () => {
@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
 
     setIsAuthenticated(false);
     setUserData(null);
-    authStorage.clear(); // 👈 ya no localStorage.removeItem suelto
+    authStorage.clear(); // ya no localStorage.removeItem suelto
   }, []);
 
   const value = {

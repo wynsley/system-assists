@@ -9,7 +9,7 @@ function Label({
   
     const sizeClass = {
     small : 'text-[.9em]',
-    medium : 'text-[1.1em]',
+    medium : 'text-[1em]',
     large : 'text-[1.5em]'
   }
   const alignClass = {

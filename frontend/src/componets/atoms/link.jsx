@@ -24,7 +24,7 @@ function Link({
 
   const sices = {
     small : `md:text-[.7em]`,
-    medium : `text-[.8em] md:text-[.9em]`,
+    medium : `text-[1em] `,
     large : `md:text-[1em]`
   }
   return (
