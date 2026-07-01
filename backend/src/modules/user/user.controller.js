@@ -2,6 +2,8 @@ import { userService } from "./user.service.js";
 import { userSchema } from "./user.schema.js";
 import { authUtils } from "../../utils/auth.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
+import { studentService } from "../student/student.service.js";
+import { attendanceService } from "../attendance/attendance.service.js";
 
 const userController = {
   create: async (req, res, next) => {
@@ -116,6 +118,62 @@ const userController = {
         success: true,
         message: "Usuario eliminado correctamente",
         user: deletedUser,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  dashboard: async (req, res, next) => {
+    try {
+      const user = req.user;
+      const data = {};
+      switch (user.role) {
+        case "ADMIN":
+          data.totalStudents = await studentService.getCount();
+          data.totalAttendanceToday = await attendanceService.getCountToday();
+          data.totalAbsentsToday =
+            Number(data.totalStudents) - Number(data.totalAttendanceToday);
+          data.averageAttendanceToday = Math.round(
+            (Number(data.totalAttendanceToday) / Number(data.totalStudents)) *
+              100,
+          );
+          data.attendanceSummaryByGrade =
+            await attendanceService.getAttendanceSummaryByGrade();
+          break;
+        case "AUXILIAR":
+          data.totalStudents = await studentService.getCount();
+          data.attendanceSummaryToday =
+            await attendanceService.getAttendanceSummaryToday();
+          data.behaviorSummaryToday =
+            await attendanceService.getBehaviorSummaryToday();
+          data.attendaceSummaryToday = await attendanceService.get({
+            page: 1,
+            limit: 5,
+            sortBy: "createdAt",
+            sortOrder: "desc",
+          });
+          break;
+        case "PARENT": {
+          console.error(user.idUser);
+          data.mainSummary =
+            await attendanceService.getAttendanceSummaryByParent({
+              idParent: user.sub,
+            });
+
+          break;
+        }
+        default:
+          return res.status(403).json({
+            success: false,
+            message: "Rol no autorizado para acceder al dashboard",
+          });
+      }
+
+      return res.json({
+        success: true,
+        message: "Dashboard data retrieved successfully",
+        data,
       });
     } catch (error) {
       next(error);

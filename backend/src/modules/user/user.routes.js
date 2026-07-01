@@ -21,6 +21,8 @@ userRoutes.get(
   userController.get,
 );
 
+userRoutes.get("/dashboard", authMiddleware, userController.dashboard);
+
 userRoutes.get(
   "/:id",
   authMiddleware,

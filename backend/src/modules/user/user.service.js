@@ -21,6 +21,7 @@ const userService = {
     });
     return queryResult;
   },
+
   get: async ({ page, limit, role, sortBy, search, sortOrder }) => {
     const where = searchUtils.buildSearchWhere({
       search,

@@ -107,6 +107,15 @@ const studentService = {
 
     return student;
   },
+
+  getCount: async () => {
+    const total = await prisma.student.count({
+      where: {
+        status: "ACTIVO",
+      },
+    });
+    return total;
+  },
 };
 
 export { studentService };
