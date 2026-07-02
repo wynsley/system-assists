@@ -9,7 +9,11 @@ import { ModalCreateClassroom } from "../../modals/adminRegisters/ModalCreateCla
 
 import { useModal } from "../../../hooks/hookModal/useModal";
 
-function HeaderAcademic() {
+function HeaderAcademic({
+  refetchGrades,
+  refethcSections,
+  refetchClassroom
+}) {
   //hooks modals
   const modalMangAcademy = useModal();
   const modalGrade = useModal();
@@ -61,15 +65,24 @@ function HeaderAcademic() {
       )}
       
       {modalGrade.isOpen && (
-        <ModalCreateGrade closeModal={modalGrade.closeModal} />
+        <ModalCreateGrade 
+          closeModal={modalGrade.closeModal}
+          onSuccess={refetchGrades}
+        />
       )}
 
       {modalSection.isOpen && (
-        <ModalCreateSection closeModal={modalSection.closeModal} />
+        <ModalCreateSection 
+          closeModal={modalSection.closeModal}
+          onSuccess={refethcSections}
+        />
       )}
 
       {modalClassroom.isOpen && (
-        <ModalCreateClassroom closeModal={modalClassroom.closeModal} />
+        <ModalCreateClassroom 
+          closeModal={modalClassroom.closeModal}
+          onSuccess={refetchClassroom}
+        />
       )}
     </section>
   );

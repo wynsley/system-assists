@@ -2,7 +2,7 @@ import Joi from "joi"
 
 const CLASSROOM_STATUSES = ["ACTIVO", "INACTIVO"];
 
-const ValidationCreateClassroom = Joi.object({
+const ValidationClassroom = Joi.object({
   year: Joi
     .number()
     .integer()
@@ -36,4 +36,4 @@ const ValidationCreateClassroom = Joi.object({
     .optional(),
 })
 
-export { ValidationCreateClassroom }
+export { ValidationClassroom }

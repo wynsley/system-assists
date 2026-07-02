@@ -19,6 +19,8 @@ function useSections({ page = 1, limit = API_LIMITS.section, idGrade } = {}) {
 
     params.set("page", page);
     params.set("limit", safeLimit);
+    params.set("sortBy", "name");   //Orden Alfabetico
+    params.set("sortOrder", "asc"); //A - Z
 
     if (idGrade) params.set("idGrade", idGrade);
 

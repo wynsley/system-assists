@@ -9,13 +9,14 @@ import { apiFetch } from "../../../helpers/apiFetch";
 import { Button } from "../../atoms/button";
 import { TitleAndDescaription } from "../../molecules/titleandDescription";
 import { FormItem } from "../../molecules/formItems";
-import { ValidationCreateClassroom } from "../../../validations/AcademicManagement/validateCreationClassroom";
-import { valid } from "joi";
+import { ValidationClassroom } from "../../../validations/AcademicManagement/validateCreationClassroom";
 
-function ModalCreateClassroom({ closeModal, onSuccess }) {
-  const [year, setYear] = useState(new Date().getFullYear().toString());
-  const [idGrade, setIdGrade] = useState("");
-  const [idSection, setIdSection] = useState("");
+function ModalCreateClassroom({ closeModal, onSuccess, mode = "create", initialData = null }) {
+  const isEdit = mode === "edit";
+
+  const [year, setYear] = useState(String(initialData?.year ?? new Date().getFullYear()));
+  const [idGrade, setIdGrade] = useState(String(initialData?.idGrade ?? ""));
+  const [idSection, setIdSection] = useState(String(initialData?.idSection ?? ""));
   const [error, setError] = useState("");
 
   const { loading, startLoading, stopLoading } = useLoading();
@@ -23,10 +24,8 @@ function ModalCreateClassroom({ closeModal, onSuccess }) {
   const modalRef = useClickOutside(closeModal);
 
   const { grades } = useGrades({ limit: 50 });
-
-  // Traemos todas las secciones y filtramos por grado en el front
-  // (hasta que el backend acepte ?idGrade= en sectionSchema.params)
   const { sections: allSections } = useSections({ limit: 100 });
+
   const sections = idGrade
     ? allSections.filter((s) => String(s.idGrade) === String(idGrade))
     : allSections;
@@ -48,15 +47,17 @@ function ModalCreateClassroom({ closeModal, onSuccess }) {
         name: "idGrade",
         value: idGrade,
         placeholder: "Todos los grados",
-        onChange: (e) => {  setIdGrade(e.target.value); setIdSection(""); // resetea sección al cambiar grado
+        onChange: (e) => {
+          setIdGrade(e.target.value);
+          setIdSection("");
         },
         options: [
-          { text : 'Elige un grado', value : ''},
+          {text : 'Grados',  value: ''},
           ...grades.map((g) => ({
-            text: `${g.level}° grado`,
-            value: String(g.idGrade),
-          }))
-        ],
+          text: `${g.level}° grado`,
+          value: String(g.idGrade),
+        })),
+        ]
       },
       {
         text: "Sección",
@@ -68,10 +69,13 @@ function ModalCreateClassroom({ closeModal, onSuccess }) {
           ? (idGrade ? "Sin secciones en este grado" : "Selecciona un grado primero")
           : "Selecciona una sección",
         onChange: (e) => setIdSection(e.target.value),
-        options: sections.map((s) => ({
+        options: [
+          {text: 'Secciones', value : ''},
+          ...sections.map((s) => ({
           text: `${s.grade}° ${s.section}`,
           value: String(s.idSection),
         })),
+        ]
       },
     ]
   ];
@@ -81,27 +85,25 @@ function ModalCreateClassroom({ closeModal, onSuccess }) {
     setError("");
 
     try {
-      await ValidationCreateClassroom.validateAsync({
+      await ValidationClassroom.validateAsync({
         year: Number(year),
         idSection: String(idSection),
       });
 
-      if (!idSection) {
-        setError("Debes seleccionar una sección");
-        return;
-      }
-
       startLoading();
 
-      const { ok, data } = await apiFetch("/classroom", "POST", {
+      const url = isEdit ? `/classroom/${initialData.idClassroom}` : "/classroom";
+      const method = isEdit ? "PATCH" : "POST";
+
+      const { ok, data } = await apiFetch(url, method, {
         year: Number(year),
         idSection: Number(idSection),
       });
 
       if (!data) throw new Error("No se pudo conectar al servidor");
-      if (!ok || !data.success) throw new Error(data.message || "Error al crear aula");
+      if (!ok || !data.success) throw new Error(data.message || (isEdit ? "Error al actualizar aula" : "Error al crear aula"));
 
-      showToast("Aula creada con éxito", "success");
+      showToast(isEdit ? "Aula actualizada con éxito" : "Aula creada con éxito", "success");
       onSuccess?.();
       closeModal();
     } catch (err) {
@@ -121,8 +123,8 @@ function ModalCreateClassroom({ closeModal, onSuccess }) {
       >
         <div className="relative">
           <TitleAndDescaription
-            title="CREAR AULA"
-            description="Asigna una sección a un año académico"
+            title={isEdit ? "EDITAR AULA" : "CREAR AULA"}
+            description={isEdit ? "Modifica los datos del aula" : "Asigna una sección a un año académico"}
             level="h3"
             size="small"
             weight="bold"
@@ -136,17 +138,14 @@ function ModalCreateClassroom({ closeModal, onSuccess }) {
 
         {error && <span className="text-sm text-red-600">{error}</span>}
 
-        <FormItem
-          formFields={formFields}
-          selectVariant="secondary"
-        />
+        <FormItem formFields={formFields} selectVariant="secondary" />
 
         <div className="flex gap-3 justify-end">
           <Button type="button" variant="primary" text="Cancelar" onClick={closeModal} />
           <Button
             type="submit"
             variant="primary"
-            text={loading ? "Creando..." : "Crear Aula"}
+            text={loading ? "Guardando..." : (isEdit ? "Actualizar Aula" : "Crear Aula")}
             disabled={loading}
           />
         </div>

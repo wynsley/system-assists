@@ -1,61 +1,93 @@
-import { useState } from "react";
-import { FaTrash, FaEdit } from "react-icons/fa";
-import { HiAcademicCap } from "react-icons/hi2";
+import { FaEdit, FaTrash } from "react-icons/fa";
 import { MdMeetingRoom } from "react-icons/md";
 import { Table } from "../tableReusable";
 import { TitleAndIcon } from "../../molecules/titleAndIcon";
+//Modals
+import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
+import { ModalCreateClassroom } from "../../modals/adminRegisters/ModalCreateClassroom";
 //hooks
+import { useState } from "react";
 import { useGrades } from "../../../hooks/hoocksAdmin/useGrades";
 import { useToast } from "../../../hooks/hookGlobals/useToast";
-import { useSections } from "../../../hooks/hoocksAdmin/useSections";
-import { useClassrooms } from "../../../hooks/hoocksAdmin/useClassroom";
+import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
+import { GradeAndSeccions } from "./listGradesAndSecctions";
+import { useModal } from "../../../hooks/hookModal/useModal";
 
-function AcademicCatalog() {
+function AcademicCatalog({
+  gradesHook,
+  sectionsHook,
+  classroomHook
+}) {
   const { showToast } = useToast();
+  const { config, confirm, closeConfirm } = useConfirm();
+  const editClassroomModal = useModal();
+  const [editingClassroom, setEditingClassroom] = useState(null);
 
-  const { grades, loading: loadingGrades, deleteGrade } = useGrades({ limit: 10 });
-  const { sections, loading: loadingSections, deleteSection } = useSections({ limit: 50 });
-  const { classrooms, total: totalClassrooms, loading: loadingClassrooms, deleteClassroom } = useClassrooms({ limit: 20 });
+  const { 
+    grades, 
+    loading: loadingGrades, 
+    deleteGrade, 
+    refetch: refetchGrades } = gradesHook;
 
-  // Para cada grado, filtra sus secciones
+  const { 
+    sections, 
+    loading: loadingSections, 
+    deleteSection, 
+    refetch: refetchSections } = sectionsHook;
+
+  const { 
+    classrooms, 
+    total: totalClassrooms, 
+    loading: loadingClassrooms, 
+    eleteClassroom, 
+    refetch: refetchClassrooms } = classroomHook;
+
   const getSectionsForGrade = (idGrade) =>
     sections.filter((s) => s.idGrade === idGrade);
 
-  const handleDeleteGrade = async (grade) => {
+  const handleDeleteGrade = (grade) => {
     const sects = getSectionsForGrade(grade.idGrade);
     if (sects.length > 0) {
       showToast("Elimina primero las secciones de este grado", "error");
       return;
     }
-    if (!window.confirm(`¿Eliminar el grado ${grade.level}°?`)) return;
-    try {
-      await deleteGrade(grade.idGrade);
-      showToast("Grado eliminado correctamente", "success");
-    } catch (err) {
-      showToast(err.message, "error");
-    }
+    confirm({
+      title: `¿Eliminar ${grade.level}° grado?`,
+      description: "Esta acción no se puede deshacer. Se eliminará el grado permanentemente.",
+      onConfirm: async () => {
+        await deleteGrade(grade.idGrade);
+        showToast("Grado eliminado correctamente", "success");
+      },
+    });
   };
 
-  const handleDeleteSection = async (section) => {
-    if (!window.confirm(`¿Eliminar la sección ${section.grade}° ${section.section}?`)) return;
-    try {
-      await deleteSection(section.idSection);
-      showToast("Sección eliminada correctamente", "success");
-    } catch (err) {
-      showToast(err.message, "error");
-    }
+  const handleDeleteSection = (section) => {
+    confirm({
+      title: `¿Eliminar sección ${section.grade}° ${section.section}?`,
+      description: "Esta acción no se puede deshacer.",
+      onConfirm: async () => {
+        await deleteSection(section.idSection);
+        showToast("Sección eliminada correctamente", "success");
+      },
+    });
   };
 
-  const handleDeleteClassroom = async (classroom) => {
-    if (!window.confirm(`¿Eliminar el aula ${classroom.year} - ${classroom.grade}° ${classroom.section}?`)) return;
-    try {
-      await deleteClassroom(classroom.idClassroom);
-      showToast("Aula eliminada correctamente", "success");
-    } catch (err) {
-      showToast(err.message, "error");
-    }
+  const handleDeleteClassroom = (classroom) => {
+    confirm({
+      title: `¿Eliminar aula ${classroom.year} - ${classroom.grade}° ${classroom.section}?`,
+      description: "Se eliminará el aula y sus relaciones con estudiantes.",
+      onConfirm: async () => {
+        await deleteClassroom(classroom.idClassroom);
+        showToast("Aula eliminada correctamente", "success");
+      },
+    });
   };
-
+  
+  const handleEditClassroom = (classroom) => {
+    setEditingClassroom(classroom);
+    editClassroomModal.openModal();
+  };
+  //headers de la tabla aulas
   const classroomHeaders = ["Año", "Grado", "Sección", "Acciones"];
 
   const renderClassroomRow = (classroom, index) => (
@@ -68,7 +100,11 @@ function AcademicCatalog() {
       <td className="px-6 py-4">{classroom.section}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
-          <button className="text-blue-700 hover:underline" title="Editar">
+          <button
+            onClick={() => handleEditClassroom(classroom)}
+            className="text-blue-700 hover:underline"
+            title="Editar"
+          >
             <FaEdit size={16} />
           </button>
           <button
@@ -86,78 +122,16 @@ function AcademicCatalog() {
   return (
     <div className="mt-8 flex flex-col gap-8 w-[96%] md:w-[90%] md:max-w-7xl mx-auto">
 
-      {/* SECCIÓN: GRADOS Y SECCIONES */}
-      <div className="flex flex-col gap-4">
-        <TitleAndIcon
-          icon={HiAcademicCap}
-          title="GRADOS Y SECCIONES"
-          level="h3"
-          weight="bold"
-          sizeIcon={24}
-        />
-
-        {loadingGrades || loadingSections ? (
-          <p className="text-gray-500 text-sm py-4">Cargando grados y secciones...</p>
-        ) : grades.length === 0 ? (
-          <p className="text-gray-400 text-sm">No hay grados registrados aún.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {grades.map((grade) => {
-              const gradeSections = getSectionsForGrade(grade.idGrade);
-              return (
-                <div
-                  key={grade.idGrade}
-                  className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex flex-col gap-3"
-                >
-                  {/* Header de la card */}
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-blue text-lg">
-                      {grade.level}° Grado
-                    </span>
-                    <button
-                      onClick={() => handleDeleteGrade(grade)}
-                      className="text-red-400 hover:text-red-600"
-                      title="Eliminar grado"
-                    >
-                      <FaTrash size={14} />
-                    </button>
-                  </div>
-
-                  {/* Secciones del grado */}
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs text-gray-400 uppercase tracking-wide">
-                      Secciones ({gradeSections.length})
-                    </span>
-                    {gradeSections.length === 0 ? (
-                      <span className="text-xs text-gray-300 italic">Sin secciones</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-2">
-                        {gradeSections.map((s) => (
-                          <div
-                            key={s.idSection}
-                            className="flex items-center gap-1 bg-blue-50 text-blue-700 rounded-full px-3 py-1 text-xs font-medium"
-                          >
-                            {s.section}
-                            <button
-                              onClick={() => handleDeleteSection(s)}
-                              className="text-blue-400 hover:text-red-500 ml-1"
-                              title={`Eliminar sección ${s.section}`}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* SECCIÓN: AULAS */}
+      {/* GRADOS Y SECCIONES */}
+      <GradeAndSeccions
+        loadingGrades={loadingGrades}
+        loadingSections={loadingSections}
+        grades={grades}
+        getSectionsForGrade={getSectionsForGrade}
+        handleDeleteGrade={handleDeleteGrade}
+        handleDeleteSection={handleDeleteSection}
+      />
+      {/* AULAS */}
       <div className="flex flex-col gap-4">
         <TitleAndIcon
           icon={MdMeetingRoom}
@@ -181,6 +155,27 @@ function AcademicCatalog() {
           </>
         )}
       </div>
+
+      {/* Modal confirmación */}
+      {config && (
+        <ModalConfirm
+          title={config.title}
+          description={config.description}
+          onConfirm={config.onConfirm}
+          closeModal={closeConfirm}
+          variant={config.variant ?? "danger"}
+        />
+      )}
+
+      {/* Modal editar aula */}
+      {editClassroomModal.isOpen && editingClassroom && (
+        <ModalCreateClassroom
+          mode="edit"
+          initialData={editingClassroom}
+          closeModal={editClassroomModal.closeModal}
+          onSuccess={refetchClassrooms}
+        />
+      )}
     </div>
   );
 }

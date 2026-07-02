@@ -2,14 +2,13 @@ import { FiX } from "react-icons/fi"
 import { TitleAndDescaription } from "../../molecules/titleandDescription"
 import { FormItem } from "../../molecules/formItems";
 import { Button } from "../../atoms/button";
-//validations
 import { ValidationUpdateStudent } from "../../../validations/students/validateUpdateStudent";
 import { ValidationCreateStudent } from "../../../validations/students/validateRegisterStudent";
-//hooks
 import { useState } from "react"
 import { useLoading } from "../../../hooks/hookGlobals/useLoading"
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useClickOutside } from "../../../hooks/hookModal/useClickOutside"
+import { useClassrooms } from "../../../hooks/hoocksAdmin/useClassroom";
 import { apiFetch } from "../../../helpers/apiFetch";
 
 function ModalRegisterStudent({ closeModal, mode = "create", initialData = null, onSuccess }) {
@@ -22,14 +21,19 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
   const [phone, setPhone] = useState(initialData?.phone ?? '')
   const [email, setEmail] = useState(initialData?.email ?? '')
   const [status, setStatus] = useState(initialData?.status ?? '')
+  const [idClassroom, setIdClassroom] = useState('') // solo en create
 
   const [error, setError] = useState('')
   const { loading, startLoading, stopLoading } = useLoading()
   const { showToast } = useToast()
 
-  const { modalRef } = useClickOutside(closeModal)
+  // ✅ fix: sin desestructurar
+  const modalRef = useClickOutside(closeModal)
 
   const schema = isEdit ? ValidationUpdateStudent : ValidationCreateStudent;
+
+  // Trae aulas solo cuando es modo crear
+  const { classrooms } = useClassrooms({ limit: 100 });
 
   const validateField = async (name, value) => {
     try {
@@ -37,8 +41,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
       await fieldSchema.validateAsync(value);
       setError('');
     } catch (err) {
-      const message = err.details ? err.details[0].message : err.message;
-      setError(message);
+      setError(err.details ? err.details[0].message : err.message);
     }
   };
 
@@ -50,6 +53,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     setPhone('')
     setEmail('')
     setStatus('')
+    setIdClassroom('')
     setError('')
   }
 
@@ -91,11 +95,10 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
         name: 'gender',
         value: gender,
         require: 'required',
-        placeholder: 'Selecciona',
         onChange: (e) => setGender(e.target.value),
         onBlur: (e) => validateField('gender', e.target.value),
         options: [
-          { text: 'seleccione su sexo', value: '' },
+          { text: 'Seleccione su sexo', value: '' },
           { text: 'Masculino', value: 'M' },
           { text: 'Femenino', value: 'F' },
           { text: 'Otro', value: 'O' },
@@ -127,11 +130,10 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
       type: 'select',
       name: 'status',
       value: status,
-      placeholder: 'Selecciona un estado',
       onChange: (e) => setStatus(e.target.value),
       onBlur: (e) => validateField('status', e.target.value),
       options: [
-        { text: 'Estado', value: '' },
+        { text: 'Selecciona un estado', value: '' },
         { text: 'Activo', value: 'ACTIVO' },
         { text: 'Inactivo', value: 'INACTIVO' },
         { text: 'Suspendido', value: 'SUSPENDIDO' },
@@ -141,6 +143,21 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
         { text: 'Retirado', value: 'RETIRADO' },
       ]
     },
+    //  Solo en modo crear
+    ...(!isEdit ? [{
+      text: 'Aula',
+      type: 'select',
+      name: 'idClassroom',
+      value: idClassroom,
+      onChange: (e) => setIdClassroom(e.target.value),
+      options: [
+        { text: 'Sin aula asignada', value: '' },
+        ...classrooms.map((c) => ({
+          text: `${c.year} — ${c.grade}° ${c.section}`,
+          value: String(c.idClassroom),
+        }))
+      ]
+    }] : []),
   ]
 
   const onSubmit = async (e) => {
@@ -151,9 +168,9 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
 
     try {
       await schema.validateAsync(payload);
-
       startLoading();
 
+      // PASO 1: crear/editar el estudiante
       const url = isEdit ? `/student/${initialData.idStudent}` : '/student';
       const method = isEdit ? 'PATCH' : 'POST';
 
@@ -164,19 +181,40 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
         throw new Error(data.message || (isEdit ? "Error al actualizar estudiante" : "Error al registrar estudiante"));
       }
 
+      // PASO 2: asignar aula (solo en create y si eligió una)
+      if (!isEdit && idClassroom) {
+        const idStudent = data.student?.idStudent;
+
+        if (!idStudent) {
+          throw new Error("No se pudo obtener el ID del estudiante para asignar el aula");
+        }
+
+        const { ok: okCS, data: dataCS } = await apiFetch('/classroom-student', 'POST', {
+          idClassroom: Number(idClassroom),
+          idStudent,
+        });
+
+        if (!dataCS) throw new Error("Estudiante creado, pero no se pudo conectar para asignar el aula");
+        if (!okCS || !dataCS.success) {
+          // El estudiante ya fue creado — avisamos pero no revertimos
+          showToast("Estudiante creado, pero no se pudo asignar el aula", "error");
+          onSuccess?.();
+          closeModal();
+          return;
+        }
+      }
+
       showToast(
         isEdit ? "Estudiante actualizado con éxito" : "Estudiante registrado con éxito",
         "success"
       );
 
       if (!isEdit) resetForm();
-
       onSuccess?.();
       closeModal();
 
     } catch (err) {
-      const message = err.details ? err.details[0].message : (err.message || "Error al guardar estudiante");
-      setError(message);
+      setError(err.details ? err.details[0].message : (err.message || "Error al guardar estudiante"));
     } finally {
       stopLoading();
     }
