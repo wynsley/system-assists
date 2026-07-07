@@ -339,7 +339,7 @@ const attendanceService = {
 
     // Calcular faltas
     for (const item of Object.values(summary)) {
-      item.absent = item.students - item.present - item.late - item.justified;
+      item.absent = item.total - item.present - item.late - item.justified;
     }
 
     return Object.values(summary).sort((a, b) => a.level - b.level);

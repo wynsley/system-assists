@@ -1,71 +1,37 @@
 import { useState } from "react";
 import { FaEdit } from "react-icons/fa";
-
 import { Table } from "../tableReusable";
 import { FiltersSearchDownload } from "./filtersSerchDowldAttendance";
 import { ModalActionsAttendance } from "../../modals/assistant/modalActionsAttendace";
-
-import { statusBadge } from "../../../mocks/statusBadge";
-
-import { useModal } from "../../../hooks/hookModal/useModal";
-import { useStudentSearch } from "../../../hooks/hooksAssistant/useStudentSeach";
+import { statusBadge } from "../../../config/assistant/attendanceBadges";
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
 
-function AttendanceTable({
-  students,
-  lastScanned,
-  updateStudentStatus,
-}) {
+function AttendanceTable({ attendances = [], lastScannedDni, updateAttendance }) {
+  const [search, setSearch] = useState("");
+  const [grade, setGrade] = useState("");
+  const [section, setSection] = useState("");
 
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const { openRowId, openRow, closeRow } = useRowToggle();
 
-  // filtros
-  const {
-    search,
-    setSearch,
-    filtered,
-    grade,
-    setGrade,
-    section,
-    setSection,
-  } = useStudentSearch(students);
+  // Filtra en el frontend por nombre, DNI, grado o sección
+  const filtered = attendances.filter((a) => {
+    const term = search.toLowerCase();
+    const matchSearch = !search
+      || a.student?.fullname?.toLowerCase().includes(term)
+      || a.student?.dni?.includes(term);
+    const matchGrade = !grade || String(a.student?.classroom?.grade) === grade;
+    const matchSection = !section || a.student?.classroom?.section === section;
+    return matchSearch && matchGrade && matchSection;
+  });
 
-  // modal
-  const {
-    isOpen,
-    openModal,
-    closeModal,
-  } = useModal();
-
-  // fila activa
-  const {
-    openRowId,
-    openRow,
-    closeRow,
-  } = useRowToggle();
-
-  // abrir modal
-  const handleEdit = (student) => {
-    setSelectedStudent(student);
-    // activar fila
-    openRow(student.id);
-    // abrir modal
-    openModal();
+  const handleEdit = (attendance) => {
+    openRow(attendance.idAttendance);
   };
 
-  const headers = [
-    "Estudiante",
-    "DNI",
-    "Grado",
-    "Sección",
-    "Estado",
-    "Hora",
-    "Acciones",
-  ];
+  const headers = ["Estudiante", "DNI", "Grado", "Sección", "Estado", "Hora", "Acciones"];
 
   return (
     <div className="w-full lg:flex-1 mt-8">
-
       <FiltersSearchDownload
         search={search}
         setSearch={setSearch}
@@ -73,96 +39,74 @@ function AttendanceTable({
         setGrade={setGrade}
         section={section}
         setSection={setSection}
-        students={students}
+        students={attendances} // para poblar los selects de grado/sección
         filtered={filtered}
       />
 
       <Table
         headers={headers}
         data={filtered}
-        emptyMessage="No se encontraron estudiantes"
-        renderRow={(student) => {
-
-          const badge =
-            statusBadge[student.attendance.status]
-            ?? statusBadge.absent;
+        emptyMessage="No se encontraron registros de asistencia"
+        renderRow={(attendance) => {
+          const badge = statusBadge[attendance.status] ?? statusBadge.absent;
           const Icon = badge.icon;
-          const isJustScanned =
-            lastScanned?.dni === student.dni;
-          // fila activa
-          const isActive =
-            openRowId === student.id;
+          const isActive = openRowId === attendance.idAttendance;
+
+          // ¿Es el último escaneado?
+          const isJustScanned = lastScannedDni === attendance.student?.dni;
+
+          // Hora formateada
+          const time = attendance.date
+            ? new Date(attendance.date).toLocaleTimeString("es-PE", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : null;
 
           return (
             <tr
-              key={student.id}
+              key={attendance.idAttendance}
               className={`
-                border-b border-gray-100
-                transition-colors
-                ${isActive
-                  ? "bg-blue-100"
-                  : "hover:bg-gray-50"
-                }
+                border-b border-gray-100 transition-colors
+                ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}
               `}
             >
               <td className="px-6 py-4">
                 <div className="flex items-center gap-2 font-medium">
-                  {
-                    isJustScanned && (
-                      <span
-                        className="
-                        w-2 h-2 rounded-full
-                        bg-blue animate-pulse
-                      "
-                      />
-                    )
-                  }
-                  {student.student}
+                  {isJustScanned && (
+                    <span className="w-2 h-2 rounded-full bg-blue animate-pulse" />
+                  )}
+                  {attendance.student?.fullname ?? "—"}
                 </div>
               </td>
-
+              <td className="px-6 py-4">{attendance.student?.dni ?? "—"}</td>
               <td className="px-6 py-4">
-                {student.dni}
+                {attendance.student?.classroom?.grade
+                  ? `${attendance.student.classroom.grade}°`
+                  : "—"}
               </td>
-
               <td className="px-6 py-4">
-                {student.grade}
+                {attendance.student?.classroom?.section ?? "—"}
               </td>
-
               <td className="px-6 py-4">
-                {student.section}
-              </td>
-
-              <td className="px-6 py-4">
-                <span
-                  className={`
-                    inline-flex items-center gap-1
-                    px-3 py-1 rounded-full text-xs
-                    ${badge.className}
-                  `}
-                >
+                <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs ${badge.className}`}>
                   <Icon size={14} />
                   {badge.label}
                 </span>
               </td>
-              <td className="px-6 py-4">
-                {student.attendance.time ?? "—"}
-              </td>
+              <td className="px-6 py-4">{time ?? "—"}</td>
               <td className="px-6 py-4 relative">
                 <button
-                  onClick={() => handleEdit(student)}
-                  className="
-                    text-blue-700
-                    hover:underline
-                  "
+                  onClick={() => handleEdit(attendance)}
+                  className="text-blue-700 hover:underline"
                 >
                   <FaEdit size={20} />
                 </button>
-                {openRowId === student.id && (
+                {isActive && (
                   <ModalActionsAttendance
                     closeModal={closeRow}
-                    student={student}
-                    updateStudentStatus={updateStudentStatus}
+                    attendance={attendance}
+                    updateAttendance={updateAttendance}
                   />
                 )}
               </td>

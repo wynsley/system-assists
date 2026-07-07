@@ -33,7 +33,7 @@ function AttendanceByGrade({attendanceByGrade}) {
                       className="w-3 h-3 rounded-full"
                       style={{backgroundColor: attendance.colors.late}}
                     />
-                    <span>Presentes: {attendance.late}</span>
+                    <span>Tardanzas: {attendance.late}</span>
                   </div>
                   <div 
                     className=" text-sm text-gray-900 flex items-center gap-2"
@@ -42,7 +42,7 @@ function AttendanceByGrade({attendanceByGrade}) {
                       className="w-3 h-3 rounded-full"
                       style={{backgroundColor: attendance.colors.absent}}
                     />
-                    <span>Presentes: {attendance.absent}</span>
+                    <span>Ausentes: {attendance.absent}</span>
                   </div>
                 </div>
               </div>

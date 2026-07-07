@@ -4,7 +4,7 @@ import { MdOutlineQrCode2 } from "react-icons/md";
 import { useModal } from "../../../hooks/hookModal/useModal";
 import { ModalScanner } from "../../modals/assistant/modalScanner";
 
-function BannerAttendanceAssitant ({handleScan}) {
+function BannerAttendanceAssitant ({findStudentByDni, createAttendance}) {
 
   const {
     isOpen,
@@ -42,12 +42,12 @@ function BannerAttendanceAssitant ({handleScan}) {
       </Button>
       {
         isOpen && (
-          <ModalScanner
-            closeModal = {closeModal}
-            onScan={handleScan}
-
-          />
-        )
+            <ModalScanner
+              closeModal={closeModal}
+              findStudentByDni={findStudentByDni}
+              createAttendance={createAttendance}
+            /> 
+    )
       }
     </section>
   ) 

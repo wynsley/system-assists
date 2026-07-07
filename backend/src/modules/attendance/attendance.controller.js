@@ -153,6 +153,48 @@ const attendanceController = {
       next(error);
     }
   },
+  // Dashboard Admin: resumen general de hoy
+getSummaryToday: async (req, res, next) => {
+  try {
+    const summary = await attendanceService.getAttendanceSummaryToday();
+    return res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+},
+
+// Dashboard Admin: resumen por grado
+getSummaryByGrade: async (req, res, next) => {
+  try {
+    const summary = await attendanceService.getAttendanceSummaryByGrade();
+    return res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+},
+
+// Dashboard Auxiliar: comportamiento AD/A/B/C
+getBehaviorSummary: async (req, res, next) => {
+  try {
+    const summary = await attendanceService.getBehaviorSummaryToday();
+    return res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+},
+
+// Dashboard Padre: resumen completo de sus hijos
+getSummaryByParent: async (req, res, next) => {
+  try {
+    const idParent = req.user.sub;
+    const summary = await attendanceService.getAttendanceSummaryByParent({
+      idParent,
+    });
+    return res.json({ success: true, data: summary });
+  } catch (error) {
+    next(error);
+  }
+},
 };
 
 export { attendanceController };

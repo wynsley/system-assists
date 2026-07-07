@@ -19,9 +19,10 @@ import { incidentRoutes } from "./modules/incident/incident.route.js";
 const app = express();
 
 // middlewares
+const allowedOrigin = process.env.CORS_ORIGIN?.replace(/\/$/, "");
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: allowedOrigin,
     credentials: true,
   }),
 );

@@ -1,12 +1,23 @@
 import { useVisible } from "../../../hooks/hookGlobals/useVisible"
 import { Paragraph } from "../../atoms/paragraph"
 import { Small } from "../../atoms/small"
-import { statsAdmin } from "../../../mocks/statsAmdmin"
+import { getStatsAdmin } from "../../../config/dashborads/statsAdmin"
 
 
-function CardsStatsAdmin () {
+function CardsStatsAdmin ({
+    loading =  false,
+    totalStudents,
+    presentStudents,
+    lateStudents,
+    averageAttendance,}) {
 
   const { visible } = useVisible()
+  const statsAdmin = getStatsAdmin({
+    totalStudents,
+    presentStudents,
+    lateStudents,
+    averageAttendance,
+  });
 
   return(
     <div className=" -mt-10 px-6 w-full mx-auto
@@ -37,7 +48,7 @@ function CardsStatsAdmin () {
                   size="large"
                 />
                 <Paragraph
-                  text={item.value}
+                  text={loading ? "..." : item.value}
                   weight="bold"
                   size="slogan"
                 />

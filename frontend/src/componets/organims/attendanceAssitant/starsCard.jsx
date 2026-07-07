@@ -1,7 +1,7 @@
 import { Paragraph } from "../../atoms/paragraph";
 import { Small } from "../../atoms/small";
 import { useVisible } from "../../../hooks/hookGlobals/useVisible";
-import { statusBadge } from "../../../mocks/statusBadge";
+import { statusBadge } from "../../../config/assistant/attendanceBadges";
 
 function StatsCardControl({ stats }) {
   const { visible } = useVisible(90);

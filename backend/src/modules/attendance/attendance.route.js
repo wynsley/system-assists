@@ -20,6 +20,33 @@ attendanceRoutes.get(
   attendanceController.get,
 );
 attendanceRoutes.get(
+  "/summary/today",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN",  "AUXILIAR"]),
+  attendanceController.getSummaryToday,
+);
+
+attendanceRoutes.get(
+  "/summary/grade",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN"]),
+  attendanceController.getSummaryByGrade,
+);
+
+attendanceRoutes.get(
+  "/summary/behavior",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN", "AUXILIAR"]),
+  attendanceController.getBehaviorSummary,
+);
+
+attendanceRoutes.get(
+  "/summary/parent",
+  authMiddleware,
+  authMiddlewareRole(["PARENT"]),
+  attendanceController.getSummaryByParent,
+);
+attendanceRoutes.get(
   "/:id",
   authMiddleware,
   authMiddlewareRole(["ADMIN", "AUXILIAR"]),
