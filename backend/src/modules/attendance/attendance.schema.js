@@ -72,16 +72,24 @@ const attendanceSchema = {
     limit: numericField({
       label: "El límite",
       min: 1,
-      max: 50,
-      defaultValue: 10,
+      max: 35,
+      defaultValue: 30,
       required: false,
     }),
     sortBy: sortByField({
-      sortFields: attendanceFields.sort,
-      defaultValue: "idAttendance",
+      sortFields: [...attendanceFields.sort, "lastname", "grade", "section"], // 🔹 agregamos opciones válidas para el roster
+      defaultValue: "lastname", // 🔹 antes era "idAttendance"
     }),
     sortOrder: sortOrderField(),
     search: searchField(),
+    date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Formato de fecha inválido (YYYY-MM-DD)").optional(),
+    grade: numericField({
+      label: "El grado",
+      min: 1,
+      max: 6,
+      required: false,
+    }),
+    section: z.string().min(1).max(10).optional(),
   }),
 };
 

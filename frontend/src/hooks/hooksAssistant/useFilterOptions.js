@@ -1,42 +1,54 @@
 import { useMemo } from "react";
 
-// Hook encargado de generar las opciones
-// de grados y secciones para los filtros.
 export function useFilterOptions(students = []) {
 
-  const gradeOptions = useMemo(
-    () => [
+  const gradeOptions = useMemo(() => {
+
+    const grades = [
+      ...new Set(
+        students
+          .map(student => student.grade)
+          .filter(Boolean)
+      )
+    ];
+
+    return [
       {
         text: "Grados",
         value: "",
       },
+      ...grades.map(grade => ({
+        text: `${grade}°`,
+        value: String(grade),
+      }))
+    ];
 
-      ...[...new Set(
-        students.map((student) => student.grade)
-      )].map((grade) => ({
-        text: grade,
-        value: grade,
-      })),
-    ],
-    [students]
-  );
+  }, [students]);
 
-  const sectionOptions = useMemo(
-    () => [
+
+  const sectionOptions = useMemo(() => {
+
+    const sections = [
+      ...new Set(
+        students
+          .map(student => student.section)
+          .filter(Boolean)
+      )
+    ];
+
+    return [
       {
         text: "Secciones",
         value: "",
       },
-
-      ...[...new Set(
-        students.map((student) => student.section)
-      )].map((section) => ({
+      ...sections.map(section => ({
         text: section,
         value: section,
-      })),
-    ],
-    [students]
-  );
+      }))
+    ];
+
+  }, [students]);
+
 
   return {
     gradeOptions,

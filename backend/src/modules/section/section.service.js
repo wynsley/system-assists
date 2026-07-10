@@ -30,7 +30,7 @@ const sectionService = {
     return mappersUtils.formatSection(queryResult.section);
   },
 
-  get: async ({ page, limit, sortOrder, search, sortBy }) => {
+  get: async ({ page, limit, idGrade, sortOrder, search, sortBy}) => {
     const where = searchUtils.buildSearchWhere({
       search,
       stringFields: ["name"],
@@ -41,6 +41,9 @@ const sectionService = {
           field: "level",
         },
       ],
+      filters: {
+      idGrade,
+    },
     });
 
     let orderBy;

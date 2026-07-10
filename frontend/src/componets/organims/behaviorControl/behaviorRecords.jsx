@@ -1,12 +1,12 @@
 import { useModal } from "../../../hooks/hookModal/useModal"
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle"
-import { useStudentSearch } from "../../../hooks/hooksAssistant/useStudentSeach"
+import { useStudentFilters } from "../../../hooks/hooksAssistant/useStudentFilters"
 import { Title } from "../../atoms/title"
 import { Table } from "../tableReusable"
 import { FiltersBehavior } from "./FilterSerchDowldBehavior"
 import { DespliegueDescription } from "../../molecules/behaviorControl/despliegueDescription"
 
-function BehaviorRecords({ students, updateBehavior }) {
+function BehaviorRecords({ behaviors, updateBehavior }) {
   const title = "HISTORIAL DE REGISTROS"
   //hook filtros y buscadores
   const {
@@ -17,7 +17,7 @@ function BehaviorRecords({ students, updateBehavior }) {
     setGrade,
     section,
     setSection
-  } = useStudentSearch(students)
+  } = useStudentFilters(behaviors)
 
   //hook modal
   const {

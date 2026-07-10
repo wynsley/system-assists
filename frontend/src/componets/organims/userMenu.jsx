@@ -11,7 +11,6 @@ import { useNavbar } from "../../context/navbarContext";
 import { UserMenuModal } from '../modals/modalsUser/userMenuModal';
 import { ChangePasswordModal } from '../modals/modalsUser/userPasswordModal';
 import { useNotifications } from "../../hooks/hooksAssistant/useNotifications";
-import { useStudents } from "../../hooks/hooksAssistant/useStudent";
 
 function UserMenu({ mobile = false }) {
 

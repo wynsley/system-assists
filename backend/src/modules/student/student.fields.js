@@ -28,6 +28,34 @@ const studentFields = {
     status: true,
     createdAt: true,
     updatedAt: true,
+    // nuevo — aula activa del estudiante
+    classroomStudents: {
+      where: {
+        classroom: {
+          status: "ACTIVO",
+        },
+      },
+      select: {
+        idClassroomStudent: true,
+        classroom: {
+          select: {
+            idClassroom: true,
+            year: true,
+            section: {
+              select: {
+                name: true,
+                grade: {
+                  select: {
+                    level: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      take: 1, // solo el aula activa más reciente
+    },
   },
   sort: [
     "firstname",

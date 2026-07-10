@@ -48,6 +48,10 @@ const sectionSchema = {
         label: "El ID de la sección",
         required: false,
       }),
+      idGrade: idField({
+        label: "El ID del grado",
+        required: false,
+      }),
       page: numericField({
         label: "La página",
         min: 1,

@@ -123,26 +123,22 @@ function ListUsers() {
       />
 
       {error && <span className="text-sm text-red-600">{error}</span>}
-
-      {loading ? (
-        <p className="text-center text-gray-500 py-10">Cargando usuarios...</p>
-      ) : (
-        <>
+      <div className="min-h-112 flex flex-col gap-4">
+        <div className={loading ? "opacity-50 pointer-events-none" : ""}>
           <Table
             headers={headers}
             data={users}
             renderRow={renderRow}
             emptyMessage="No se encontraron usuarios"
           />
-          <PaginationUSers
-            total={total}
-            setPage={setPage}
-            page={page}
-            users={users}
-          />
-        </>
-      )}
-
+        </div>
+        <PaginationUSers
+          total={total}
+          setPage={setPage}
+          page={page}
+          users={users}
+        />
+      </div>
       {editingUser && (
         <ModalRegisterUser
           mode="edit"

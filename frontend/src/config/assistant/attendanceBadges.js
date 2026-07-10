@@ -8,17 +8,24 @@ export const statusBadge = {
     className: "bg-green-100 text-green-700",
     icon: FaUserCheck,
   },
+
   TARDANZA: {
     label: "Tardanza",
     className: "bg-yellow-100 text-yellow-700",
     icon: HiClock,
   },
+
   JUSTIFICADA: {
     label: "Justificada",
     className: "bg-blue-100 text-blue-700",
     icon: FaUserCheck,
   },
-
+  // se trabaja solo en el frontend
+  FALTA: {
+    label: "Falta",
+    className: "bg-red-100 text-red-700",
+    icon: FaUserTimes,
+  },
   // Keys para las cards de stats (del summaryToday)
   total: {
     label: "Total",

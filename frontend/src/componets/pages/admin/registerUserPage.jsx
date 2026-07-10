@@ -6,8 +6,8 @@ function RegisterUser () {
 
   //USERS CREDENTIALS
   /*AUXILIAR
-      email:  lopez@gmail.com
-      password: Lopez11@
+      email:  pompe@gmail.com
+      password: Pompe11@
   */
   /*PARENT
       email:  diaz@gmail.com

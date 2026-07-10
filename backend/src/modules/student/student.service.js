@@ -41,7 +41,7 @@ const studentService = {
   get: async ({ page, limit, status, sortBy, search, sortOrder, gender }) => {
     const where = searchUtils.buildSearchWhere({
       search,
-      stringFields: ["firstname", "lastname", "phone", "email"],
+      stringFields: ["firstname", "lastname", "phone", "dni", "email"],
       filters: {
         status,
         gender,

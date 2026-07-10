@@ -147,7 +147,7 @@ enum StatusAssistance {
 
 model Attendance {
   idAttendance Int              @id @default(autoincrement())
-  date         DateTime         @db.Date
+  date         DateTime         @default(now())
   status       StatusAssistance @default(PRESENTE)
   note         String?          @db.VarChar(100)
   idStudent    Int

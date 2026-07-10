@@ -1,5 +1,4 @@
 import { MyTemplate } from "../../templates/myTemplate";
-import { useStudents } from "../../../hooks/hooksAssistant/useStudent";
 import { useNotifications } from "../../../hooks/hooksAssistant/useNotifications";
 import { NotificationsList } from "../../organims/notifications/assitantNotificationsList";
 import { NotificationHeader } from "../../organims/notifications/assitantNotificationHeader";
@@ -8,7 +7,6 @@ import { StatsNotificationsAssistant } from "../../organims/notifications/cardsN
 
 function NotificationsAssistantPage () {
 
-  const {students} = useStudents()
 
   const {
     notifications, 

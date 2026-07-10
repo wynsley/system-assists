@@ -8,6 +8,7 @@ import { useAttendance } from "../../../hooks/hooksAssistant/useAttendance";
 function DashboardAssitantPage() {
   // DashboardAssistantPage.jsx
 const {
+  stats,
   attendances: recentActivity,
   summaryToday,
   behaviorSummary,
@@ -25,9 +26,6 @@ const {
     { name: "B",  description: "En Proceso",      progress: behaviorSummary.B  ?? 0 },
     { name: "C",  description: "En Inicio",       progress: behaviorSummary.C  ?? 0 },
   ] : [];
-
-  // { total, present, late, absent } == statusBadge keys 
-  const stats = summaryToday ?? { total: 0, present: 0, late: 0, absent: 0 };
 
   return (
     <MyTemplate>

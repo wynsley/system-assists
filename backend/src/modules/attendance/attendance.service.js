@@ -2,8 +2,8 @@ import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import { year } from "../../utils/date.utils.js";
 import { mappersUtils } from "../../utils/mappers.utils.js";
-import { searchUtils } from "../../utils/search.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
+import { classroomStudentFields } from "../classroomStudent/classroomStudent.fields.js";
 import { parentService } from "../parent/parent.service.js";
 import { studentService } from "../student/student.service.js";
 import { userService } from "../user/user.service.js";
@@ -49,38 +49,85 @@ const attendanceService = {
     return queryResult.attendance;
   },
 
-  get: async ({ page, limit, sortOrder, sortBy, search, date }) => {
-    const where = searchUtils.buildSearchWhere({
-      search,
-      numberFields: ["idAttendance", "idStudent", "idAuxiliar"],
-      stringFields: ["note"],
-      relationStringFields: [
-        { relation: "student", field: "firstname" },
-        { relation: "student", field: "lastname" },
-        { relation: "student", field: "dni" },
-        { relation: "auxiliar", field: "firstname" },
-        { relation: "auxiliar", field: "lastname" },
-      ],
-      filters: {
-        date,
-      },
-    });
+  get: async ({ page, limit, sortOrder, sortBy, search, date, grade, section }) => {
+    // Rango del día a consultar (por defecto, hoy)
+    const targetDate = date ? new Date(`${date}T00:00:00`) : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
 
-    const [attendances, total] = await Promise.all([
-      prisma.attendance.findMany({
+    // Filtro de aula/sección/grado (solo activos)
+    const classroomFilter = { status: "ACTIVO" };
+    if (grade || section) {
+      classroomFilter.section = {
+        ...(grade ? { grade: { level: grade } } : {}),
+        ...(section ? { name: section } : {}),
+      };
+    }
+
+    // Filtro de búsqueda por nombre/DNI (solo estudiantes activos)
+    const studentFilter = { status: "ACTIVO" };
+    if (search) {
+      studentFilter.OR = [
+        { firstname: { contains: search, mode: "insensitive" } },
+        { lastname: { contains: search, mode: "insensitive" } },
+        { dni: { contains: search } },
+      ];
+    }
+
+    const where = {
+      classroom: classroomFilter,
+      student: studentFilter,
+    };
+
+    // Traemos el "roster": todos los matriculados que cumplen el filtro
+    const [classroomStudents, total] = await Promise.all([
+      prisma.classroomStudent.findMany({
         where,
-        orderBy: validateUtils.buildOrderBy(sortBy, sortOrder),
+        orderBy: validateUtils.buildOrderBy(sortBy, sortOrder), 
         skip: (page - 1) * limit,
         take: limit,
-        select: attendanceFields.select,
+        select: classroomStudentFields.select,
       }),
-      prisma.attendance.count({ where }),
+      prisma.classroomStudent.count({ where }),
     ]);
 
-    return {
-      attendances: attendances.map(mappersUtils.formatAttendance),
-      total,
-    };
+    //Traemos SOLO las asistencias de esos estudiantes, en la fecha pedida
+    const idStudents = classroomStudents.map((cs) => cs.student.idStudent);
+
+    const attendances = idStudents.length
+      ? await prisma.attendance.findMany({
+        where: {
+          idStudent: { in: idStudents },
+          date: { gte: targetDate, lt: nextDay },
+        },
+        select: {
+          idAttendance: true,
+          date: true,
+          status: true,
+          note: true,
+          idStudent: true,
+        },
+      })
+      : [];
+
+    const attendanceMap = new Map(attendances.map((a) => [a.idStudent, a]));
+
+    //Cruzamos en memoria (rápido: es solo esta página, máx 35 registros)
+    const roster = classroomStudents.map((cs) => {
+      const formatted = mappersUtils.formatClassroomStudent(cs);
+      const attendance = attendanceMap.get(cs.student.idStudent);
+
+      return {
+        ...formatted,
+        idAttendance: attendance?.idAttendance ?? null,
+        status: attendance?.status ?? null, //null = sin registro, lo maneja el frontend
+        date: attendance?.date ?? null,
+        note: attendance?.note ?? null,
+      };
+    });
+
+    return { attendances: roster, total };
   },
 
   getById: async ({ idAttendance }) => {

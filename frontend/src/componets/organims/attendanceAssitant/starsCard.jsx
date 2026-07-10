@@ -20,6 +20,7 @@ function StatsCardControl({ stats }) {
       >
         {Object.entries(stats).map(([key, val]) => {
           const config = statusBadge[key];
+          if (!config) return null;
           const Icon = config.icon;
 
           return (

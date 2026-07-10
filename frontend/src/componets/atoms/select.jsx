@@ -1,6 +1,6 @@
 
 function Select({
-  options, 
+  options = [],
   name,
   value,
   onChange,

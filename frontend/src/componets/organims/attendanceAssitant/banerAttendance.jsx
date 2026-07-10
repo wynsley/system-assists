@@ -4,7 +4,7 @@ import { MdOutlineQrCode2 } from "react-icons/md";
 import { useModal } from "../../../hooks/hookModal/useModal";
 import { ModalScanner } from "../../modals/assistant/modalScanner";
 
-function BannerAttendanceAssitant ({findStudentByDni, createAttendance}) {
+function BannerAttendanceAssitant ({findStudentByDni, createAttendance, onScanSuccess}) {
 
   const {
     isOpen,
@@ -12,6 +12,11 @@ function BannerAttendanceAssitant ({findStudentByDni, createAttendance}) {
     closeModal,
     toggleModal
   } = useModal()
+
+  const handleCreateAttendance = async (params) => {
+    await createAttendance(params);
+    onScanSuccess?.(params.idStudent); // notifica al padre
+  };
 
   const title = 'Registro de Asistencias'
   const description = 'Registra la asistencia diaria de los estudiantes'
@@ -45,7 +50,7 @@ function BannerAttendanceAssitant ({findStudentByDni, createAttendance}) {
             <ModalScanner
               closeModal={closeModal}
               findStudentByDni={findStudentByDni}
-              createAttendance={createAttendance}
+              createAttendance={handleCreateAttendance}
             /> 
     )
       }

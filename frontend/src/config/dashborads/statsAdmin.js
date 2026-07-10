@@ -1,5 +1,6 @@
 import { IoAnalyticsSharp } from "react-icons/io5";
-import { FaUserCheck, FaUsers, FaUserTimes } from "react-icons/fa";
+import { FaUserCheck, FaUsers } from "react-icons/fa";
+import { TbClockHour3Filled } from "react-icons/tb";
 
 export const getStatsAdmin = ({
   totalStudents,
@@ -22,8 +23,8 @@ export const getStatsAdmin = ({
   {
     label: "Tardanzas",
     value: lateStudents,
-    className: "bg-red-100 text-red-700",
-    icon: FaUserTimes,
+    className: "bg-yellow-100 text-yellow-700",
+    icon: TbClockHour3Filled,
   },
   {
     label: "Asistencia promedio",

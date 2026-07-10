@@ -17,7 +17,7 @@ const userService = {
         data: { firstname, lastname, email, passwordHash, phone, role },
         select: userFields.select,
       });
-      return { user };
+      return  user ;
     });
     return queryResult;
   },

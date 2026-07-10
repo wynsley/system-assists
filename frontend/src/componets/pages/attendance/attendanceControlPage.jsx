@@ -3,63 +3,45 @@ import { BannerAttendanceAssitant } from "../../organims/attendanceAssitant/bane
 import { MyTemplate } from "../../templates/myTemplate";
 import { StatsCardControl } from "../../organims/attendanceAssitant/starsCard";
 import { AttendanceTable } from "../../organims/attendanceAssitant/attendanceTable";
-import { ModalScanResult } from "../../modals/assistant/ModalScanResult";
 import { useAttendance } from "../../../hooks/hooksAssistant/useAttendance";
-import { useModal } from "../../../hooks/hookModal/useModal";
-import { useToast } from "../../../hooks/hookGlobals/useToast";
 
 function AttendanceControlPage() {
   const [lastScannedDni, setLastScannedDni] = useState(null);
 
-  const { showToast } = useToast();
-
-  const today = new Date().toISOString().split("T")[0];
-
   const {
-    attendances,
-    total,
-    summaryToday,
+    rows,
+    stats,
     loading,
+    error,
     createAttendance,
-    updateAttendance,
+    saveAttendance,
     findStudentByDni,
-  } = useAttendance({
-    page: 1,
-    limit: 20,
-    date: today,
-    fetchSummary: true,
-  });
-
-  // Stats para las 4 cards superiores
-  const stats = summaryToday
-    ? {
-        total:   (summaryToday.present ?? 0) + (summaryToday.late ?? 0) + (summaryToday.justified ?? 0) + (summaryToday.absent ?? 0),
-        present: summaryToday.present   ?? 0,
-        late:    summaryToday.late      ?? 0,
-        absent:  summaryToday.absent    ?? 0,
-      }
-    : { total: 0, present: 0, late: 0, absent: 0 };
-
-    console.log("summaryToday:", summaryToday);
-    console.log("attendances:", attendances);
+  } = useAttendance();
 
   return (
     <MyTemplate>
-      <BannerAttendanceAssitant 
+      <BannerAttendanceAssitant
         findStudentByDni={findStudentByDni}
         createAttendance={createAttendance}
+        onScanSuccess={(dni) => setLastScannedDni(dni)}
       />
 
       <section className="w-[96%] max-w-7xl mx-auto">
-        <StatsCardControl stats={stats} loading={loading} />
+        <StatsCardControl
+          stats={stats}
+          loading={loading}
+        />
+
+        {error && (
+          <span className="text-sm text-red-600">{error}</span>
+        )}
 
         <AttendanceTable
-          attendances={attendances}
+          rows={rows}
           lastScannedDni={lastScannedDni}
-          updateAttendance={updateAttendance}
+          saveAttendance={saveAttendance}
         />
       </section>
-
     </MyTemplate>
   );
 }

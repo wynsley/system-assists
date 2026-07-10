@@ -1,7 +1,8 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 // Layout
 import { MainLayout } from "./componets/layouts/mainlayout";
-
+//loaging
+import { Loading } from "./componets/molecules/loading";
 // Auth
 import { useAuth } from "./hooks/hookGlobals/useAuth";
 import { LoginPage } from "./componets/pages/auth/loginPage";
@@ -33,9 +34,7 @@ function App() {
   // Esperar a que el AuthProvider termine de verificar la sesión
   if (loading) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center">
-        Cargando...
-      </div>
+      <Loading logo={'/LOGO.png'}/>
     );
   }
 

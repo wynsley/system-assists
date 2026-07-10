@@ -3,230 +3,198 @@ import { apiFetch } from "../../helpers/apiFetch";
 
 function useAttendance({
   page = 1,
-  limit = 20,
+  limit = 30,
   search,
-  date,
+  grade,
+  section,
   fetchSummary = false,
   fetchBehavior = false,
-  autoFetch = true,
 } = {}) {
-  const [attendances, setAttendances] = useState([]);
+  const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [summaryToday, setSummaryToday] = useState(null);
-  const [behaviorSummary, setBehavior] = useState(null);
+  const [behaviorSummary, setBehaviorSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ─────────────────────────────────────────────────────────────
-  // Lista de asistencias
-  // ─────────────────────────────────────────────────────────────
-  const fetchAttendances = useCallback(async () => {
-    if (!autoFetch) return;
+  const today = new Date().toISOString().split("T")[0];
 
-    setError(null);
-
+  // ── Roster del día (ya viene resuelto desde el backend) ─────────────────
+  const buildTable = useCallback(async () => {
     const params = new URLSearchParams();
-    params.set("page", page);
     params.set("limit", limit);
-    params.set("sortOrder", "desc");
-
+    params.set("page", page);
+    params.set("date", today);
     if (search) params.set("search", search);
-    if (date) params.set("date", date);
+    if (grade) params.set("grade", grade);
+    if (section) params.set("section", section);
 
-    const { ok, data } = await apiFetch(
-      `/attendance?${params.toString()}`,
-      "GET"
-    );
+    const { ok, data } = await apiFetch(`/attendance?${params.toString()}`, "GET");
 
     if (!ok || !data?.success) {
-      setAttendances([]);
+      setError("Error al obtener asistencias");
+      setRows([]);
       setTotal(0);
-      setError(data?.message || "Error al obtener asistencias");
       return;
     }
 
-    setAttendances(data.data ?? []);
-    setTotal(data.pagination?.total ?? 0);
-  }, [page, limit, search, date, autoFetch]);
+    //Concatenamos datos del estudainte para renderizarlos
+    const tableRows = (data.data ?? []).map((row) => ({
+      idStudent:    row.student.idStudent,
+      fullname:     `${row.student.firstname} ${row.student.lastname}`,
+      dni:          row.student.dni,
+      grade:        row.grade,
+      section:      row.section,
+      year:         row.year,
+      idAttendance: row.idAttendance,
+      status:       row.status ?? "FALTA", // null del backend → FALTA en UI
+      time: row.date
+        ? new Date(row.date).toLocaleTimeString("es-PE", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : null,
+      note: row.note ?? null,
+    }));
 
-  // ─────────────────────────────────────────────────────────────
-  // Resumen del día
-  // ─────────────────────────────────────────────────────────────
+    setRows(tableRows);
+    setTotal(data.pagination?.total ?? tableRows.length);
+  }, [search, grade, section, page, limit, today]);
+
+  // ── Resumen del día ────────────────────────────────────────────────────
   const fetchSummaryToday = useCallback(async () => {
     if (!fetchSummary) return;
-
-    const { ok, data } = await apiFetch(
-      "/attendance/summary/today",
-      "GET"
-    );
-
-    if (!ok || !data?.success) {
-      setSummaryToday(null);
-      return;
-    }
-
-    const summary = data.data;
-
+    const { ok, data } = await apiFetch("/attendance/summary/today", "GET");
+    if (!ok || !data?.success) { setSummaryToday(null); return; }
+    const s = data.data;
     setSummaryToday({
-      ...summary,
-      total:
-        (summary.present ?? 0) +
-        (summary.late ?? 0) +
-        (summary.justified ?? 0) +
-        (summary.absent ?? 0),
+      present:   s.present   ?? 0,
+      late:      s.late      ?? 0,
+      justified: s.justified ?? 0,
+      absent:    s.absent    ?? 0,
+      total: (s.present ?? 0) + (s.late ?? 0) + (s.justified ?? 0) + (s.absent ?? 0),
     });
   }, [fetchSummary]);
 
-  // ─────────────────────────────────────────────────────────────
-  // Resumen de comportamiento
-  // ─────────────────────────────────────────────────────────────
+  // ── Comportamiento AD/A/B/C ────────────────────────────────────────────
   const fetchBehaviorSummary = useCallback(async () => {
     if (!fetchBehavior) return;
-
-    const { ok, data } = await apiFetch(
-      "/attendance/summary/behavior",
-      "GET"
-    );
-
-    if (!ok || !data?.success) {
-      setBehavior(null);
-      return;
-    }
-
-    setBehavior(data.data);
+    const { ok, data } = await apiFetch("/attendance/summary/behavior", "GET");
+    if (!ok || !data?.success) { setBehaviorSummary(null); return; }
+    setBehaviorSummary(data.data);
   }, [fetchBehavior]);
 
-  // ─────────────────────────────────────────────────────────────
-  // Refresca toda la información
-  // ─────────────────────────────────────────────────────────────
   const refreshData = useCallback(async () => {
     await Promise.all([
-      fetchAttendances(),
+      buildTable(),
       fetchSummaryToday(),
       fetchBehaviorSummary(),
     ]);
-  }, [
-    fetchAttendances,
-    fetchSummaryToday,
-    fetchBehaviorSummary,
-  ]);
+  }, [buildTable, fetchSummaryToday, fetchBehaviorSummary]);
 
-  // ─────────────────────────────────────────────────────────────
-  // Carga inicial
-  // ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       await refreshData();
       setLoading(false);
     };
-
     load();
   }, [refreshData]);
 
-  // ─────────────────────────────────────────────────────────────
-  // Registrar asistencia
-  // ─────────────────────────────────────────────────────────────
-  const createAttendance = useCallback(
-    async ({ idStudent, status, note = "" }) => {
-      const { ok, data } = await apiFetch("/attendance", "POST", {
-        idStudent,
-        status,
-        note,
-        date: new Date().toISOString(),
-      });
+  // ── Crear asistencia (escaneo o registro manual) ────────────────────────
+  const createAttendance = useCallback(async ({ idStudent, status, note = "" }) => {
+    const body = { idStudent, status };
+    if (note?.trim()) body.note = note.trim();
 
-      if (!data) {
-        throw new Error("No se pudo conectar con el servidor");
-      }
+    const { ok, data } = await apiFetch("/attendance", "POST", body);
 
-      if (!ok || !data.success) {
-        throw new Error(
-          data.message || "Error al registrar la asistencia"
-        );
-      }
+    if (!data) throw new Error("No se pudo conectar con el servidor");
+    if (!ok || !data.success) throw new Error(data.message || "Error al registrar asistencia");
 
-      await refreshData();
+    await refreshData();
+    return data.attendance;
+  }, [refreshData]);
 
-      return data.attendance;
-    },
-    [refreshData]
-  );
+  // ── Actualizar asistencia existente ──────────────────────────────────────
+  const updateAttendance = useCallback(async (idAttendance, { status, note }) => {
+    const { ok, data } = await apiFetch(`/attendance/${idAttendance}`, "PATCH", {
+      status,
+      note,
+    });
 
-  // ─────────────────────────────────────────────────────────────
-  // Actualizar asistencia
-  // ─────────────────────────────────────────────────────────────
-  const updateAttendance = useCallback(
-    async (idAttendance, { status, note }) => {
-      const { ok, data } = await apiFetch(
-        `/attendance/${idAttendance}`,
-        "PATCH",
-        {
-          status,
-          note,
-        }
-      );
+    if (!data) throw new Error("No se pudo conectar con el servidor");
+    if (!ok || !data.success) throw new Error(data.message || "Error al actualizar asistencia");
 
-      if (!data) {
-        throw new Error("No se pudo conectar con el servidor");
-      }
+    await refreshData();
+    return data.attendance;
+  }, [refreshData]);
 
-      if (!ok || !data.success) {
-        throw new Error(
-          data.message || "Error al actualizar la asistencia"
-        );
-      }
+  // ── Guardar (decide crear o actualizar según si ya existe registro) ─────
+  const saveAttendance = useCallback(async (row, { status, note }) => {
+    if (row.idAttendance) {
+      return updateAttendance(row.idAttendance, { status, note });
+    }
+    return createAttendance({ idStudent: row.idStudent, status, note });
+  }, [createAttendance, updateAttendance]);
 
-      await refreshData();
-
-      return data.attendance;
-    },
-    [refreshData]
-  );
-
-  // ─────────────────────────────────────────────────────────────
-  // Buscar estudiante por DNI
-  // ─────────────────────────────────────────────────────────────
+  // ── Buscar estudiante por DNI (para el escaneo QR) ────────────────────
   const findStudentByDni = useCallback(async (dni) => {
-  const cleanDni = dni.trim();
+    const cleanDni = dni.trim();
 
-  const { ok, data } = await apiFetch(
-    `/student?search=${cleanDni}&limit=20&page=1`,
-    "GET"
-  );
-
-  if (!ok || !data?.success) {
-    throw new Error("No se encontró el estudiante");
-  }
-
-  const student = data.data?.find(
-    (item) => item.dni === cleanDni
-  );
-
-  if (!student) {
-    throw new Error(
-      `No existe un estudiante con DNI ${cleanDni}`
+    const { ok, data } = await apiFetch(
+      `/student?search=${cleanDni}&limit=20&page=1`,
+      "GET"
     );
-  }
 
-  return student;
-}, []);
+    if (!ok || !data?.success) {
+      throw new Error("No se pudo conectar con el servidor");
+    }
+
+    const student = data.data?.find((item) => item.dni === cleanDni);
+
+    if (!student) {
+      throw new Error(`No existe un estudiante con DNI ${cleanDni}`);
+    }
+
+    if (student.status !== "ACTIVO") {
+      throw new Error(`El estudiante con DNI ${cleanDni} no está activo`);
+    }
+
+    const activeClassroom = student.classroomStudents?.[0]?.classroom ?? null;
+
+    return {
+      ...student,
+      classroom: activeClassroom
+        ? {
+            idClassroom: activeClassroom.idClassroom,
+            year:        activeClassroom.year,
+            grade:       activeClassroom.section?.grade?.level ?? null,
+            section:     activeClassroom.section?.name ?? null,
+          }
+        : null,
+    };
+  }, []);
+
+  // ── Stats calculadas desde las filas visibles ────────────────────────────
+  const stats = {
+    total:   rows.length,
+    present: rows.filter(r => r.status === "PRESENTE").length,
+    late:    rows.filter(r => r.status === "TARDANZA").length,
+    absent:  rows.filter(r => r.status === "FALTA").length,
+  };
 
   return {
-    // Datos
-    attendances,
+    rows,
     total,
+    stats,
     summaryToday,
     behaviorSummary,
     loading,
     error,
-
-    // Refrescar
     refetch: refreshData,
-
-    // Acciones
     createAttendance,
     updateAttendance,
+    saveAttendance,     
     findStudentByDni,
   };
 }

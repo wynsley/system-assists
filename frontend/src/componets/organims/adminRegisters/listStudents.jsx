@@ -126,33 +126,25 @@ function ListStudents() {
 
       {error && <span className="text-sm text-red-600">{error}</span>}
 
-      {loading ? (
-        <p className="text-center text-gray-500 py-10">Cargando estudiantes...</p>
-      ) : (
-        <>
+      <div className="min-h-112 flex flex-col gap-3">
+
+        <div className={loading ? "opacity-50 pointer-events-none" : ""}>
           <Table
             headers={headers}
             data={students}
             renderRow={renderRow}
             emptyMessage="No se encontraron estudiantes"
           />
-          <PaginationStudents
-            total={total}
-            setPage={setPage}
-            page={page}
-            students={students}
-          />
-        </>
-      )}
+        </div>
 
-      {editingStudent && (
-        <ModalRegisterStudent
-          mode="edit"
-          initialData={editingStudent}
-          closeModal={closeRow}
-          onSuccess={refetch}
+        <PaginationStudents
+          total={total}
+          setPage={setPage}
+          page={page}
+          students={students}
         />
-      )}
+
+      </div>
 
       {config && (
         <ModalConfirm
@@ -162,6 +154,14 @@ function ListStudents() {
           closeModal={closeConfirm}
         />
       )}
+      {editingStudent && (
+        <ModalRegisterStudent
+          mode="edit"
+          initialData={editingStudent}
+          closeModal={closeRow}
+          onSuccess={refetch}
+        />
+)}
     </div>
   )
 }

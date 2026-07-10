@@ -21,19 +21,18 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
   const [phone, setPhone] = useState(initialData?.phone ?? '')
   const [email, setEmail] = useState(initialData?.email ?? '')
   const [status, setStatus] = useState(initialData?.status ?? '')
-  const [idClassroom, setIdClassroom] = useState('') // solo en create
+  const [idClassroom, setIdClassroom] = useState(
+    initialData?.classroomStudents?.[0]?.idClassroom
+      ? String(initialData.classroomStudents[0].idClassroom)
+      : ''
+  );
 
   const [error, setError] = useState('')
   const { loading, startLoading, stopLoading } = useLoading()
   const { showToast } = useToast()
-
-  // ✅ fix: sin desestructurar
   const modalRef = useClickOutside(closeModal)
-
   const schema = isEdit ? ValidationUpdateStudent : ValidationCreateStudent;
-
-  // Trae aulas solo cuando es modo crear
-  const { classrooms } = useClassrooms({ limit: 100 });
+  const { classrooms } = useClassrooms({ limit: 50 });
 
   const validateField = async (name, value) => {
     try {
@@ -46,55 +45,34 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
   };
 
   const resetForm = () => {
-    setFirstname('')
-    setLastname('')
-    setDni('')
-    setGender('')
-    setPhone('')
-    setEmail('')
-    setStatus('')
-    setIdClassroom('')
-    setError('')
+    setFirstname(''); setLastname(''); setDni('');
+    setGender(''); setPhone(''); setEmail('');
+    setStatus(''); setIdClassroom(''); setError('');
   }
 
   const formFields = [
     {
-      text: 'Nombres',
-      type: 'text',
-      name: 'firstname',
-      value: firstname,
-      require: 'required',
-      placeholder: 'Ej: Juan Carlos',
+      text: 'Nombres', type: 'text', name: 'firstname',
+      value: firstname, require: 'required', placeholder: 'Ej: Juan Carlos',
       onChange: (e) => setFirstname(e.target.value),
       onBlur: (e) => validateField('firstname', e.target.value),
     },
     {
-      text: 'Apellidos',
-      type: 'text',
-      name: 'lastname',
-      value: lastname,
-      require: 'required',
-      placeholder: 'Ej: Pérez Gómez',
+      text: 'Apellidos', type: 'text', name: 'lastname',
+      value: lastname, require: 'required', placeholder: 'Ej: Pérez Gómez',
       onChange: (e) => setLastname(e.target.value),
       onBlur: (e) => validateField('lastname', e.target.value),
     },
     [
       {
-        text: 'DNI',
-        type: 'text',
-        name: 'dni',
-        value: dni,
-        require: 'required',
-        placeholder: '8 dígitos',
+        text: 'DNI', type: 'text', name: 'dni',
+        value: dni, require: 'required', placeholder: '8 dígitos',
         onChange: (e) => setDni(e.target.value),
         onBlur: (e) => validateField('dni', e.target.value),
       },
       {
-        text: 'Sexo',
-        type: 'select',
-        name: 'gender',
-        value: gender,
-        require: 'required',
+        text: 'Sexo', type: 'select', name: 'gender',
+        value: gender, require: 'required',
         onChange: (e) => setGender(e.target.value),
         onBlur: (e) => validateField('gender', e.target.value),
         options: [
@@ -107,29 +85,20 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     ],
     [
       {
-        text: 'Teléfono (opcional)',
-        type: 'tel',
-        name: 'phone',
-        value: phone,
-        placeholder: '+51 987 654 321',
+        text: 'Teléfono (opcional)', type: 'tel', name: 'phone',
+        value: phone, placeholder: '+51 987 654 321',
         onChange: (e) => setPhone(e.target.value),
         onBlur: (e) => validateField('phone', e.target.value),
       },
       {
-        text: 'Correo (opcional)',
-        type: 'email',
-        name: 'email',
-        value: email,
-        placeholder: 'ejemplo@correo.com',
+        text: 'Correo (opcional)', type: 'email', name: 'email',
+        value: email, placeholder: 'ejemplo@correo.com',
         onChange: (e) => setEmail(e.target.value),
         onBlur: (e) => validateField('email', e.target.value),
       },
     ],
     {
-      text: 'Estado',
-      type: 'select',
-      name: 'status',
-      value: status,
+      text: 'Estado', type: 'select', name: 'status', value: status,
       onChange: (e) => setStatus(e.target.value),
       onBlur: (e) => validateField('status', e.target.value),
       options: [
@@ -143,12 +112,9 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
         { text: 'Retirado', value: 'RETIRADO' },
       ]
     },
-    //  Solo en modo crear
-    ...(!isEdit ? [{
-      text: 'Aula',
-      type: 'select',
-      name: 'idClassroom',
-      value: idClassroom,
+    {
+      text: isEdit ? 'Aula (cambiar o asignar)' : 'Aula',
+      type: 'select', name: 'idClassroom', value: idClassroom,
       onChange: (e) => setIdClassroom(e.target.value),
       options: [
         { text: 'Sin aula asignada', value: '' },
@@ -157,7 +123,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
           value: String(c.idClassroom),
         }))
       ]
-    }] : []),
+    },
   ]
 
   const onSubmit = async (e) => {
@@ -170,7 +136,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
       await schema.validateAsync(payload);
       startLoading();
 
-      // PASO 1: crear/editar el estudiante
+      // PASO 1: crear o editar estudiante
       const url = isEdit ? `/student/${initialData.idStudent}` : '/student';
       const method = isEdit ? 'PATCH' : 'POST';
 
@@ -178,29 +144,39 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
 
       if (!data) throw new Error("No se pudo conectar al servidor");
       if (!ok || !data.success) {
-        throw new Error(data.message || (isEdit ? "Error al actualizar estudiante" : "Error al registrar estudiante"));
+        throw new Error(
+          data.errors?.[0]?.message || data.message || "Error al guardar estudiante"
+        );
       }
 
-      // PASO 2: asignar aula (solo en create y si eligió una)
-      if (!isEdit && idClassroom) {
-        const idStudent = data.student?.idStudent;
+      // PASO 2: asignar o cambiar aula
+      if (idClassroom) {
+        const idStudent = data.student?.idStudent ?? initialData?.idStudent;
 
-        if (!idStudent) {
-          throw new Error("No se pudo obtener el ID del estudiante para asignar el aula");
-        }
+        if (!idStudent) throw new Error("No se pudo obtener el ID del estudiante");
 
-        const { ok: okCS, data: dataCS } = await apiFetch('/classroom-student', 'POST', {
-          idClassroom: Number(idClassroom),
-          idStudent,
-        });
+        // En edición: solo actuar si el aula cambió
+        const currentClassroomId = initialData?.classroomStudents?.[0]?.idClassroom
+          ? String(initialData.classroomStudents[0].idClassroom)
+          : null;
 
-        if (!dataCS) throw new Error("Estudiante creado, pero no se pudo conectar para asignar el aula");
-        if (!okCS || !dataCS.success) {
-          // El estudiante ya fue creado — avisamos pero no revertimos
-          showToast("Estudiante creado, pero no se pudo asignar el aula", "error");
-          onSuccess?.();
-          closeModal();
-          return;
+        const classroomChanged = !isEdit || currentClassroomId !== idClassroom;
+
+        if (classroomChanged) {
+          const { ok: okCS, data: dataCS } = await apiFetch(
+            "/classroom-student",
+            "POST",
+            { idClassroom: Number(idClassroom), idStudent }
+          );
+
+          // 409 en edición = ya está en esa aula, no es error real
+          if (!okCS && dataCS?.message !== "Registro duplicado") {
+            throw new Error(
+              dataCS?.errors?.[0]?.message ||
+              dataCS?.message ||
+              "No se pudo asignar el aula"
+            );
+          }
         }
       }
 

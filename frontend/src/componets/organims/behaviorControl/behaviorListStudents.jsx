@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiltersBehavior } from "./FilterSerchDowldBehavior";
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
-import { useStudentSearch } from "../../../hooks/hooksAssistant/useStudentSeach";
+import { useStudentFilters } from "../../../hooks/hooksAssistant/useStudentFilters";
 import { Table } from "../tableReusable";
 import { ModalRegisterBehaviors } from "../../modals/assistant/modalRegisterBehaviors";
 import { FaUserEdit } from "react-icons/fa";
@@ -15,14 +15,14 @@ function BehaviorListStudents({
 
   // filtros
   const {
-    search,   
+    search,
     setSearch,
-    filtered,
     grade,
     setGrade,
     section,
-    setSection
-  } = useStudentSearch(students);
+    setSection,
+    filtered,
+  } = useStudentFilters(); 
 
   // fila activa
   const {

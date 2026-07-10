@@ -109,7 +109,30 @@
   color: #0891b2;
 }
 
+/* =====================================================
+  LOADER
+===================================================== */
 
+.loader-ring {
+  border: 6px solid transparent;
+  border-top-color: #facc15;
+  border-right-color: #eab308;
+
+  animation: loader-spin .8s linear infinite;
+
+  box-shadow:
+    0 0 10px rgba(250, 204, 21, .7),
+    0 0 20px rgba(250, 204, 21, .35);
+}
+
+@keyframes loader-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 
 

@@ -304,7 +304,7 @@ const seed = async () => {
     const shuffled = [...parentPool].sort(() => Math.random() - 0.5);
     const chosen = shuffled.slice(0, numParents);
     const usedParentIds = new Set();
-
+    
     for (const parent of chosen) {
       if (usedParentIds.has(parent.idUser)) continue;
       usedParentIds.add(parent.idUser);

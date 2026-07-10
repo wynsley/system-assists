@@ -10,8 +10,9 @@ import { useState } from "react";
 import { useGrades } from "../../../hooks/hoocksAdmin/useGrades";
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
-import { GradeAndSeccions } from "./listGradesAndSecctions";
+import { GradeAndSeccions } from "./listGradesAndSections";
 import { useModal } from "../../../hooks/hookModal/useModal";
+import { Paragraph } from "../../atoms/paragraph";
 
 function AcademicCatalog({
   gradesHook,
@@ -119,6 +120,7 @@ function AcademicCatalog({
     </tr>
   );
 
+  const totalClassroomStudents = `TOTAL: ${totalClassrooms}`
   return (
     <div className="mt-8 flex flex-col gap-8 w-[96%] md:w-[90%] md:max-w-7xl mx-auto">
 
@@ -151,7 +153,11 @@ function AcademicCatalog({
               renderRow={renderClassroomRow}
               emptyMessage="No hay aulas registradas aún"
             />
-            <span className="text-sm text-gray-500">Total: {totalClassrooms}</span>
+          <Paragraph
+            text = {totalClassroomStudents}
+            weight = "bold"
+            variant = "primary"
+          />
           </>
         )}
       </div>
