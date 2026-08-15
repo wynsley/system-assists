@@ -21,18 +21,19 @@ enum Role {
 }
 
 model User {
-  idUser         Int             @id @default(autoincrement())
-  firstname      String          @db.VarChar(50)
-  lastname       String          @db.VarChar(50)
-  email          String          @unique @db.VarChar(100)
-  passwordHash   String          @db.VarChar(255)
-  role           Role
-  phone          String?         @db.VarChar(20)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  studentParents StudentParent[]
-  attendances    Attendance[]
-  incidents      Incident[]
+  idUser             Int                 @id @default(autoincrement())
+  firstname          String              @db.VarChar(50)
+  lastname           String              @db.VarChar(50)
+  email              String              @unique @db.VarChar(100)
+  passwordHash       String              @db.VarChar(255)
+  role               Role
+  phone              String?             @db.VarChar(20)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  studentParents     StudentParent[]
+  attendances        Attendance[]
+  incidents          Incident[]
+  classroomAuxiliars ClassroomAuxiliar[]
 }
 
 model Grade {
@@ -120,12 +121,24 @@ model Classroom {
   idSection   Int
   status      StatusClassroom
 
-  section           Section            @relation(fields: [idSection], references: [idSection])
-  classroomStudents ClassroomStudent[]
+  section            Section             @relation(fields: [idSection], references: [idSection])
+  classroomStudents  ClassroomStudent[]
+  classroomAuxiliars ClassroomAuxiliar[]
 
   @@unique([year, idSection])
   @@index([idSection])
   @@index([year])
+}
+
+model ClassroomAuxiliar {
+  idClassroomAuxiliar Int @id @default(autoincrement())
+  idClassroom         Int
+  idAuxiliar          Int
+
+  classroom Classroom @relation(fields: [idClassroom], references: [idClassroom])
+  auxiliar  User      @relation(fields: [idAuxiliar], references: [idUser])
+
+  @@unique([idClassroom, idAuxiliar])
 }
 
 model ClassroomStudent {
@@ -174,33 +187,32 @@ enum IncidentType {
 model IncidentCatalog {
   idIncidentCatalog Int @id @default(autoincrement())
 
-  name          String @unique
-  description   String?
-  type          IncidentType
+  name           String       @unique
+  description    String?
+  type           IncidentType
   pointsDeducted Int
 
   incidents Incident[]
 }
 
 model Incident {
-  idIncident        Int      @id @default(autoincrement())
+  idIncident Int @id @default(autoincrement())
 
-  date              DateTime @db.Date
-  note              String?  @db.VarChar(255)
+  date DateTime @db.Date
+  note String?  @db.VarChar(255)
 
   idStudent         Int
   idAuxiliar        Int
   idIncidentCatalog Int
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  student           Student @relation(fields: [idStudent], references: [idStudent])
-  auxiliar          User @relation(fields: [idAuxiliar], references: [idUser])
-  incidentCatalog   IncidentCatalog @relation(fields: [idIncidentCatalog], references: [idIncidentCatalog])
+  student         Student         @relation(fields: [idStudent], references: [idStudent])
+  auxiliar        User            @relation(fields: [idAuxiliar], references: [idUser])
+  incidentCatalog IncidentCatalog @relation(fields: [idIncidentCatalog], references: [idIncidentCatalog])
 
   @@unique([idStudent, date, idIncidentCatalog])
-
   @@index([idAuxiliar])
   @@index([idIncidentCatalog])
   @@index([date])

@@ -23,7 +23,7 @@ function errorsMiddleware(err, req, res, _next) {
     // "StudentParent_idStudent_fkey" → "idStudent"
     const field = constraint.match(/_(\w+)_fkey/)?.[1] ?? "id";
 
-    return res.status(409).json({
+    return res.status(404).json({
       success: false,
       message: "Registro no encontrado",
       errors: [

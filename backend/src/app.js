@@ -15,6 +15,7 @@ import { classroomStudentRoutes } from "./modules/classroomStudent/classroomStud
 import { attendanceRoutes } from "./modules/attendance/attendance.route.js";
 import { incidentCatalogRoutes } from "./modules/incidentCatalog/incidentCatalog.route.js";
 import { incidentRoutes } from "./modules/incident/incident.route.js";
+import { classroomAuxiliarRoutes } from "./modules/classroomAuxiliar/classroomAuxiliar.routes.js";
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use("/classroom-student", classroomStudentRoutes);
 app.use("/attendance", attendanceRoutes);
 app.use("/incident-catalog", incidentCatalogRoutes);
 app.use("/incident", incidentRoutes);
+app.use("/classroom-auxiliar", classroomAuxiliarRoutes);
 
 app.use(errorsMiddleware);
 

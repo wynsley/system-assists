@@ -28,6 +28,24 @@ const mappersUtils = {
       student: row.student,
     };
   },
+  formatClassroomAuxiliar: (row) => ({
+    idClassroomAuxiliar: row.idClassroomAuxiliar,
+    classroom: {
+      idClassroom: row.idClassroom,
+      year: row.classroom?.year ?? null,
+      grade: row.classroom?.section?.grade?.level ?? null,
+      section: row.classroom?.section?.name ?? null,
+    },
+    auxiliar: {
+      idUser: row.auxiliar?.idUser ?? null,
+      fullname:
+        `${row.auxiliar?.firstname ?? ""} ${row.auxiliar?.lastname ?? ""}`.trim(),
+      firstname: row.auxiliar?.firstname ?? null,
+      lastname: row.auxiliar?.lastname ?? null,
+      email: row.auxiliar?.email ?? null,
+      phone: row.auxiliar?.phone ?? null,
+    },
+  }),
   formatAttendance: (row) => ({
     idAttendance: row.idAttendance,
     date: row.date,

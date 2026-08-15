@@ -51,7 +51,7 @@ const classroomStudentService = {
         { relation: "classroom", field: "year" }, // numérico
       ],
       relationNestedFields: [
-        { relation: "classroom", nestedRelation: "section", field: "name" }, // string ✅
+        { relation: "classroom", nestedRelation: "section", field: "name" },
       ],
       filters: {
         idClassroom,
@@ -70,10 +70,7 @@ const classroomStudentService = {
       prisma.classroomStudent.count({ where }),
     ]);
 
-    return [
-      classroomStudents.map(mappersUtils.formatClassroomStudent), // ✅ aquí
-      total,
-    ];
+    return [classroomStudents.map(mappersUtils.formatClassroomStudent), total];
   },
 
   update: async ({ idClassroomStudent, data }) => {
