@@ -56,6 +56,7 @@ const incidentFields = {
     "idAuxiliar",
     "idIncidentCatalog",
   ],
+  
   select: {
     date: true,
     idIncident: true,
@@ -93,6 +94,13 @@ const incidentFields = {
         },
       },
     },
+    auxiliar: {
+      select: {
+      idUser: true,
+      firstname: true,
+      lastname: true,
+  }
+}
   },
   sort: [
     "date",

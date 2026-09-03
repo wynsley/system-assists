@@ -19,7 +19,7 @@ const classroomService = {
     return mappersUtils.formatClassroomOnly(queryResult.classroom);
   },
 
-  get: async ({ page, limit, sortOrder, sortBy, search, year }) => {
+  get: async ({ page, limit, sortOrder, sortBy, search, year, status }) => {
     const where = searchUtils.buildSearchWhere({
       search,
       numberFields: ["idClassroom"],
@@ -38,6 +38,7 @@ const classroomService = {
       ],
       filters: {
         year,
+        status
       },
     });
     const [classrooms, total] = await Promise.all([

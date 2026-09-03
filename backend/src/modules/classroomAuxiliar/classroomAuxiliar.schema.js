@@ -3,7 +3,6 @@ import { validateUtils } from "../../utils/validate.utils.js";
 import { classroomAuxiliarFields } from "./classroomAuxiliar.fields.js";
 import { idField } from "../../utils/schemas/idField.js";
 import { numericField } from "../../utils/schemas/numericField.js";
-import { statusField } from "../../utils/schemas/statusField.js";
 import { sortByField } from "../../utils/schemas/sortByField.js";
 import { sortOrderField } from "../../utils/schemas/sortOrderField.js";
 import { searchField } from "../../utils/schemas/searchField.js";

@@ -33,14 +33,60 @@ const userService = {
     const [users, total] = await Promise.all([
       prisma.user.findMany({
         where,
-        select: userFields.select,
+        select: {
+          ...userFields.select,
+          classroomAuxiliars : {
+            select : {
+              classroom: {
+                select:{
+                  section : {
+                    select: {
+                      name : true,
+                      grade : { 
+                        select: {level:true},
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
         skip: (page - 1) * limit,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
       }),
       prisma.user.count({ where }),
     ]);
-    return [users, total];
+    
+     const formattedUsers = users.map((user) => {
+    const { classroomAuxiliars, ...rest } = user;
+
+    if (!classroomAuxiliars) return rest;
+
+    const gradesMap = new Map();
+    const sectionsMap = new Map();
+
+    for (const ca of classroomAuxiliars) {
+      const level = ca.classroom?.section?.grade?.level;
+      const name = ca.classroom?.section?.name;
+
+      if (level !== undefined && level !== null) {
+        gradesMap.set(level, { level });
+      }
+      if (name !== undefined && name !== null) {
+        sectionsMap.set(name, { name });
+      }
+    }
+
+    return {
+      ...rest,
+      grades: Array.from(gradesMap.values()),
+      sections: Array.from(sectionsMap.values()),
+    };
+  });
+
+    return [formattedUsers, total];
   },
 
   update: async (idUser, data) => {

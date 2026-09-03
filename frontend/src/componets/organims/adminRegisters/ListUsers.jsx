@@ -2,6 +2,7 @@ import { useState } from "react";
 import { TitleAndIcon } from "../../molecules/titleAndIcon"
 import { HiUsers } from "react-icons/hi2";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { LuBookOpenCheck } from "react-icons/lu"; // ícono para "asignar secciones"
 import { Table } from "../tableReusable";
 import { ROLE_LABELS } from "../../../config/roleLabels";
 import { PaginationUSers } from "../../molecules/adminRegisters/paginationUsers";
@@ -15,13 +16,11 @@ import { UserFilters } from "../../molecules/adminRegisters/filtersUsers";
 //modales
 import { ModalRegisterUser } from "../../modals/adminRegisters/modalReegisterUsers";
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
+import { ModalAssignSections } from "../../modals/adminRegisters/modalAssignSections";
+// import { ModalAssignSections } from "../../modals/adminRegisters/modalAssignSections"; // 👈 pendiente confirmar ruta real
 
 function ListUsers() {
   const title = 'USUARIOS'
-  const headers = [
-    "Nombre", "Email", "Teléfono", "Rol",
-    "Grados a cargo", "Secciones a cargo", "Acciones"
-  ]
 
   const [search, setSearch] = useState("");
   const [role, setRole] = useState("");
@@ -37,15 +36,18 @@ function ListUsers() {
     search: debouncedSearch || undefined,
   });
 
-  const { openRowId, openRow, closeRow } = useRowToggle(); //ver qeu fila esta activa para editarla o eliminarla
-  const { showToast } = useToast(); // Hoook success
+  const { openRowId, openRow, closeRow } = useRowToggle();
+  const { showToast } = useToast();
 
-  //Obtenemos el id del usuario
+  // Segundo toggle independiente, para el modal de asignar secciones
+  const { openRowId: assignRowId, openRow: openAssignRow, closeRow: closeAssignRow } = useRowToggle();
+
   const editingUser = users.find((u) => u.idUser === openRowId) ?? null;
-  //Activar la fila para editarla
-  const handleEdit = (user) => openRow(user.idUser);
+  const assigningUser = users.find((u) => u.idUser === assignRowId) ?? null;
 
-  //hook eliminar usuario
+  const handleEdit = (user) => openRow(user.idUser);
+  const handleAssignSections = (user) => openAssignRow(user.idUser);
+
   const handleDelete = (user) => {
     confirm({
       title: `¿Eliminar a ${user.firstname} ${user.lastname}?`,
@@ -57,8 +59,19 @@ function ListUsers() {
     });
   };
 
+  // 🔹 Las columnas de grados/secciones solo se muestran si el filtro es AUXILIAR (o no hay filtro)
+  const showAuxiliarColumns = !role || role === "AUXILIAR";
+
+  const headers = [
+    "Nombre", "Email", "Teléfono", "Rol",
+    ...(showAuxiliarColumns ? ["Grados a cargo", "Secciones a cargo"] : []),
+    "Acciones",
+  ];
+
   const renderRow = (user, index) => {
     const isActive = openRowId === user.idUser;
+    const isAuxiliar = user.role === "AUXILIAR";
+
     return (
       <tr
         key={user.idUser ?? index}
@@ -77,12 +90,19 @@ function ListUsers() {
             {ROLE_LABELS[user.role] ?? user.role}
           </span>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">
-          {user.grades?.map(g => g.level).join(", ") || "—"}
-        </td>
-        <td className="px-6 py-4 whitespace-nowrap">
-          {user.sections?.map(s => s.name).join(", ") || "—"}
-        </td>
+
+        {/* 🔹 Columnas condicionales: solo se renderizan si la columna está visible */}
+        {showAuxiliarColumns && (
+          <>
+            <td className="px-6 py-4 whitespace-nowrap">
+              {isAuxiliar ? (user.grades?.map(g => g.level).join(", ") || "—") : "—"}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              {isAuxiliar ? (user.sections?.map(s => s.name).join(", ") || "—") : "—"}
+            </td>
+          </>
+        )}
+
         <td className="px-6 py-4 whitespace-nowrap relative">
           <div className="flex items-center gap-3">
             <button
@@ -92,6 +112,18 @@ function ListUsers() {
             >
               <FaEdit size={18} />
             </button>
+
+            {/* 🔹 Solo AUXILIAR tiene botón de asignar secciones */}
+            {isAuxiliar && (
+              <button
+                onClick={() => handleAssignSections(user)}
+                className="text-green-700 hover:underline"
+                title="Asignar grados y secciones"
+              >
+                <LuBookOpenCheck size={18} />
+              </button>
+            )}
+
             <button
               onClick={() => handleDelete(user)}
               className="text-red-600 hover:underline"
@@ -139,11 +171,20 @@ function ListUsers() {
           users={users}
         />
       </div>
+
       {editingUser && (
         <ModalRegisterUser
           mode="edit"
           initialData={editingUser}
           closeModal={closeRow}
+          onSuccess={refetch}
+        />
+      )}
+
+      {assigningUser && (
+        <ModalAssignSections
+          user={assigningUser}
+          closeModal={closeAssignRow}
           onSuccess={refetch}
         />
       )}

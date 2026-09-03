@@ -13,6 +13,7 @@ function useStudents({ page = 1, limit = 10, status, gender, search, sortBy, sor
     startLoading()
 
     const params = new URLSearchParams();
+    
     params.set("page", page);
     params.set("limit", limit);
     if (status) params.set("status", status);

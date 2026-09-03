@@ -46,6 +46,7 @@ const mappersUtils = {
       phone: row.auxiliar?.phone ?? null,
     },
   }),
+  
   formatAttendance: (row) => ({
     idAttendance: row.idAttendance,
     date: row.date,
