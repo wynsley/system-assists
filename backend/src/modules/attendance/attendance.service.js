@@ -49,7 +49,17 @@ const attendanceService = {
     return queryResult.attendance;
   },
 
-  get: async ({ page, limit, sortOrder, sortBy, search, date, grade, section }) => {
+  get: async ({ 
+    page, 
+    limit, 
+    sortOrder, 
+    sortBy, 
+    search, 
+    date, 
+    grade, 
+    section,
+    idAuxiliar,
+  }) => {
     // Rango del día a consultar (por defecto, hoy)
     const targetDate = date ? new Date(`${date}T00:00:00`) : new Date();
     targetDate.setHours(0, 0, 0, 0);
@@ -58,6 +68,14 @@ const attendanceService = {
 
     // Filtro de aula/sección/grado (solo activos)
     const classroomFilter = { status: "ACTIVO" };
+
+    //Restringe a las aulas asignadas al auxiliar (si aplica)
+    if(idAuxiliar) {
+      classroomFilter.classroomAuxiliars = {
+        some: {idAuxiliar},
+      };
+    }
+
     if (grade || section) {
       classroomFilter.section = {
         ...(grade ? { grade: { level: grade } } : {}),
@@ -128,6 +146,43 @@ const attendanceService = {
     });
 
     return { attendances: roster, total };
+  },
+
+   // grados y secciones disponibles para los filtros del frontend.
+  getFilterOptions: async ({ idAuxiliar } = {}) => {
+    const where = { status: "ACTIVO" };
+    if (idAuxiliar) {
+      where.classroomAuxiliars = { some: { idAuxiliar } };
+    }
+
+    const classrooms = await prisma.classroom.findMany({
+      where,
+      select: {
+        section: {
+          select: {
+            name: true,
+            grade: { select: { level: true } },
+          },
+        },
+      },
+    });
+
+    const gradesMap = new Map();
+    const sectionsMap = new Map();
+
+    for (const c of classrooms) {
+      const level = c.section?.grade?.level;
+      const name = c.section?.name;
+      if (level !== undefined && level !== null) gradesMap.set(level, { level });
+      if (name !== undefined && name !== null) sectionsMap.set(name, { name });
+    }
+
+    return {
+      grades: Array.from(gradesMap.values()).sort((a, b) => a.level - b.level),
+      sections: Array.from(sectionsMap.values()).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
+    };
   },
 
   getById: async ({ idAttendance }) => {

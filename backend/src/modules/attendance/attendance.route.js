@@ -13,6 +13,14 @@ attendanceRoutes.post(
   authMiddlewareRole(["ADMIN", "AUXILIAR"]),
   attendanceController.create,
 );
+
+attendanceRoutes.get(
+  "/filters",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN", "AUXILIAR"]),
+  attendanceController.getFilterOptions,
+);
+
 attendanceRoutes.get(
   "/",
   authMiddleware,

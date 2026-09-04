@@ -49,7 +49,14 @@ const attendanceController = {
         data: req.query,
       });
 
-      const { attendances, total } = await attendanceService.get(validate);
+      //Si es AUXILIAR, solo ve el roster de sus aulas asignadas 
+      const user = req.user;
+      const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
+
+      const { attendances, total } = await attendanceService.get({
+        ...validate,
+        idAuxiliar,
+      });
 
       return res.json({
         success: true,
@@ -60,6 +67,23 @@ const attendanceController = {
           total,
           totalPages: Math.ceil(total / validate.limit),
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  // Opciones de filtro (grados/secciones) según el rol
+  getFilterOptions: async (req, res, next) => {
+    try {
+      const user = req.user;
+      const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
+
+      const options = await attendanceService.getFilterOptions({ idAuxiliar });
+
+      return res.json({
+        success: true,
+        data: options,
       });
     } catch (error) {
       next(error);
