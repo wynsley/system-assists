@@ -53,6 +53,7 @@ const classroomSchema = {
         fields: classroomFields.update,
       });
     }),
+
   params: z.object({
     id: idField({
       label: "El ID del salon de clase",
@@ -78,6 +79,24 @@ const classroomSchema = {
       sortFields: sectionFields.sort,
       defaultValue: "year",
     }),
+
+    year: numericField({
+    label: "El año",
+    min: 1900,
+    max: 3000,
+    required: false,
+  }),
+  status: statusField({
+    states: classroomFields.status,
+    required: false,
+  }),
+  grade: numericField({
+    label: "El grado",
+    min: 1,
+    max: 6,
+    required: false,
+  }),
+  section: z.string().min(1).max(10).optional(),
 
     sortOrder: sortOrderField(),
 

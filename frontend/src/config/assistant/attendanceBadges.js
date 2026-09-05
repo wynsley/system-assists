@@ -26,6 +26,7 @@ export const statusBadge = {
     className: "bg-red-100 text-red-700",
     icon: FaUserTimes,
   },
+  
   // Keys para las cards de stats (del summaryToday)
   total: {
     label: "Total",

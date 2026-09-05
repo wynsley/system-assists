@@ -3,7 +3,7 @@ import { HiAcademicCap } from "react-icons/hi2";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { Table } from "../tableReusable";
 import { GENDER_LABELS, STATUS_LABELS, STATUS_BADGE_COLORS } from "../../../config/studentLabels";
-import { PaginationStudents } from "../../molecules/adminRegisters/paginationStudents";
+import { Paginations } from "../../molecules/adminRegisters/Paginations";
 //Hooks
 import { useState } from "react";
 import { useStudents } from "../../../hooks/hoocksAdmin/useStudents";
@@ -11,7 +11,7 @@ import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
-import { StudentFilters } from "../../molecules/adminRegisters/filterStudents";
+import { Filters } from "../../molecules/adminRegisters/filters";
 //Modals
 import { ModalRegisterStudent } from "../../modals/adminRegisters/modalRegisterStudents";
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
@@ -115,13 +115,35 @@ function ListStudents() {
         sizeIcon={30}
       />
 
-      <StudentFilters
+      <Filters
         search={search}
-        onSearchChange={(value) => { setSearch(value); setPage(1); }}
-        status={status}
-        onStatusChange={(value) => { setStatus(value); setPage(1); }}
-        gender={gender}
-        onGenderChange={(value) => { setGender(value); setPage(1); }}
+        onSearchChange={(val) =>{
+          setSearch(val);
+          setPage(1);
+        }}
+        searchPlaceholder="Buscar Estudiante..."
+        selects={[
+          {
+            name: "status",
+            value: status,
+            onChange: (value) => {
+              setStatus(value);
+              setPage(1)
+            },
+            placeholder: "Estados",
+            data: STATUS_LABELS,
+          },
+          {
+            name: "gender",
+            value: gender,
+            onChange: (value) => {
+              setGender(value);
+              setPage(1)
+            },
+            placeholder: "Sexo",
+            data: GENDER_LABELS,
+          },
+        ]}
       />
 
       {error && <span className="text-sm text-red-600">{error}</span>}
@@ -137,11 +159,11 @@ function ListStudents() {
           />
         </div>
 
-        <PaginationStudents
+        <Paginations
           total={total}
           setPage={setPage}
           page={page}
-          students={students}
+          amount={students}
         />
 
       </div>
@@ -161,7 +183,7 @@ function ListStudents() {
           closeModal={closeRow}
           onSuccess={refetch}
         />
-)}
+      )}
     </div>
   )
 }

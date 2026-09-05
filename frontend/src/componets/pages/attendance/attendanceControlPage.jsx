@@ -18,6 +18,7 @@ function AttendanceControlPage() {
     findStudentByDni,
   } = useAttendance();
 
+  console.log("STATS: ", stats)
   return (
     <MyTemplate>
       <BannerAttendanceAssitant

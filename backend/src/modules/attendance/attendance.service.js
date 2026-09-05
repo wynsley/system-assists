@@ -49,14 +49,14 @@ const attendanceService = {
     return queryResult.attendance;
   },
 
-  get: async ({ 
-    page, 
-    limit, 
-    sortOrder, 
-    sortBy, 
-    search, 
-    date, 
-    grade, 
+  get: async ({
+    page,
+    limit,
+    sortOrder,
+    sortBy,
+    search,
+    date,
+    grade,
     section,
     idAuxiliar,
   }) => {
@@ -70,9 +70,9 @@ const attendanceService = {
     const classroomFilter = { status: "ACTIVO" };
 
     //Restringe a las aulas asignadas al auxiliar (si aplica)
-    if(idAuxiliar) {
+    if (idAuxiliar) {
       classroomFilter.classroomAuxiliars = {
-        some: {idAuxiliar},
+        some: { idAuxiliar },
       };
     }
 
@@ -102,7 +102,7 @@ const attendanceService = {
     const [classroomStudents, total] = await Promise.all([
       prisma.classroomStudent.findMany({
         where,
-        orderBy: validateUtils.buildOrderBy(sortBy, sortOrder), 
+        orderBy: validateUtils.buildOrderBy(sortBy, sortOrder),
         skip: (page - 1) * limit,
         take: limit,
         select: classroomStudentFields.select,
@@ -111,13 +111,18 @@ const attendanceService = {
     ]);
 
     //Traemos SOLO las asistencias de esos estudiantes, en la fecha pedida
-    const idStudents = classroomStudents.map((cs) => cs.student.idStudent);
+    const idStudents = classroomStudents.map(
+      (cs) => cs.student.idStudent
+    );
 
     const attendances = idStudents.length
       ? await prisma.attendance.findMany({
         where: {
           idStudent: { in: idStudents },
-          date: { gte: targetDate, lt: nextDay },
+          date: {
+            gte: targetDate,
+            lt: nextDay,
+          },
         },
         select: {
           idAttendance: true,
@@ -148,7 +153,7 @@ const attendanceService = {
     return { attendances: roster, total };
   },
 
-   // grados y secciones disponibles para los filtros del frontend.
+  // grados y secciones disponibles para los filtros del frontend.
   getFilterOptions: async ({ idAuxiliar } = {}) => {
     const where = { status: "ACTIVO" };
     if (idAuxiliar) {

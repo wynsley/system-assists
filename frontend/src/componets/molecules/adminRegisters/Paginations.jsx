@@ -1,10 +1,10 @@
 import { Button } from "../../atoms/button";
 import { Paragraph } from "../../atoms/paragraph"
 
-function PaginationUSers({
+function Paginations({
   total,
   page,
-  users,
+  amount,
   setPage
 }) {
   const totalUsers = `TOTAL: ${total}`;
@@ -19,6 +19,7 @@ function PaginationUSers({
         <Button
           text='Anterior'
           variant="primary"
+          type="button"
           disabled={page === 1}
           onClick={() => setPage((p) => p - 1)}
         />
@@ -26,7 +27,8 @@ function PaginationUSers({
         <Button
           text='Siguiente'
           variant="primary"
-          disabled={users.length < 10}
+          type="button"
+          disabled={amount.length < 10}
           onClick={() => setPage((p) => p + 1)}
         />
       </div>
@@ -34,4 +36,4 @@ function PaginationUSers({
   )
 }
 
-export { PaginationUSers }
+export { Paginations }

@@ -1,115 +1,215 @@
+import { useState } from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { MdMeetingRoom } from "react-icons/md";
 import { Table } from "../tableReusable";
 import { TitleAndIcon } from "../../molecules/titleAndIcon";
-//Modals
+// Modals
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
 import { ModalCreateClassroom } from "../../modals/adminRegisters/ModalCreateClassroom";
-//hooks
-import { useState } from "react";
-import { useGrades } from "../../../hooks/hoocksAdmin/useGrades";
+// Hooks
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
-import { GradeAndSeccions } from "./listGradesAndSections";
 import { useModal } from "../../../hooks/hookModal/useModal";
-import { Paragraph } from "../../atoms/paragraph";
+// Components
+import { GradeAndSeccions } from "./listGradesAndSections";
+import { Paginations } from "../../molecules/adminRegisters/Paginations";
+import { Filters } from "../../molecules/adminRegisters/filters";
 
 function AcademicCatalog({
-  gradesHook,
-  sectionsHook,
-  classroomHook
+  classroomHook,
+  page,
+  setPage,
+  search,
+  setMySearch,
+  yearFilter,
+  setYearFilter,
+  gradeFilter,
+  setGradeFilter,
+  sectionFilter,
+  setSectionFilter,
 }) {
-  const { showToast } = useToast();
-  const { config, confirm, closeConfirm } = useConfirm();
-  const editClassroomModal = useModal();
+  // HOOKS
   const [editingClassroom, setEditingClassroom] = useState(null);
+  const { showToast } = useToast();
+  const {
+    config,
+    confirm,
+    closeConfirm,
+  } = useConfirm();
 
-  const { 
-    grades, 
-    loading: loadingGrades, 
-    deleteGrade, 
-    refetch: refetchGrades } = gradesHook;
+  const editClassroomModal = useModal();
 
-  const { 
-    sections, 
-    loading: loadingSections, 
-    deleteSection, 
-    refetch: refetchSections } = sectionsHook;
+  // DATA DEL HOOK
+  const {
+    classrooms,
+    years,
+    grades,
+    sections,
+    total: totalClassrooms,
+    loading: loadingClassrooms,
+    deleteClassroom,
+    deleteGrade,
+    deleteSection,
+    refetchClassrooms,
+    refetchCatalogs,
+  } = classroomHook;
 
-  const { 
-    classrooms, 
-    total: totalClassrooms, 
-    loading: loadingClassrooms, 
-    eleteClassroom, 
-    refetch: refetchClassrooms } = classroomHook;
+  const sectionsForFilter = (() => {
+    const filtered = gradeFilter
+      ? sections.filter((s) => String(s.idGrade) === String(gradeFilter))
+      : sections;
 
-  const getSectionsForGrade = (idGrade) =>
-    sections.filter((s) => s.idGrade === idGrade);
+    const uniqueByName = Array.from(
+      new Map(filtered.map((s) => [s.section, s])).values()
+    );
 
+    return uniqueByName.sort((a, b) => a.section.localeCompare(b.section));
+  })();
+
+  // SECCIONES POR GRADO
+  const getSectionsForGrade = (idGrade) => {
+    return sections.filter(
+      (section) => section.idGrade === idGrade
+    );
+  };
+
+  // ELIMINAR GRADO
   const handleDeleteGrade = (grade) => {
-    const sects = getSectionsForGrade(grade.idGrade);
+    const sects = getSectionsForGrade(
+      grade.idGrade
+    );
+
     if (sects.length > 0) {
-      showToast("Elimina primero las secciones de este grado", "error");
+      showToast(
+        "Elimina primero las secciones de este grado",
+        "error"
+      );
       return;
     }
     confirm({
       title: `¿Eliminar ${grade.level}° grado?`,
-      description: "Esta acción no se puede deshacer. Se eliminará el grado permanentemente.",
+      description:
+        "Esta acción no se puede deshacer. Se eliminará el grado permanentemente.",
       onConfirm: async () => {
-        await deleteGrade(grade.idGrade);
-        showToast("Grado eliminado correctamente", "success");
+        try {
+          await deleteGrade(grade.idGrade);
+          showToast(
+            "Grado eliminado correctamente",
+            "success"
+          );
+        } catch (error) {
+          showToast(
+            error.message ||
+            "No se pudo eliminar el grado",
+            "error"
+          );
+        }
       },
     });
   };
+
+  // ELIMINAR SECCIÓN
 
   const handleDeleteSection = (section) => {
     confirm({
       title: `¿Eliminar sección ${section.grade}° ${section.section}?`,
-      description: "Esta acción no se puede deshacer.",
+      description:
+        "Esta acción no se puede deshacer.",
       onConfirm: async () => {
-        await deleteSection(section.idSection);
-        showToast("Sección eliminada correctamente", "success");
+        try {
+          await deleteSection(
+            section.idSection
+          );
+          showToast(
+            "Sección eliminada correctamente",
+            "success"
+          );
+        } catch (error) {
+          showToast(
+            error.message ||
+            "No se pudo eliminar la sección",
+            "error"
+          );
+        }
       },
     });
   };
 
+  // ELIMINAR AULA
   const handleDeleteClassroom = (classroom) => {
     confirm({
       title: `¿Eliminar aula ${classroom.year} - ${classroom.grade}° ${classroom.section}?`,
-      description: "Se eliminará el aula y sus relaciones con estudiantes.",
+      description:
+        "Se eliminará el aula y sus relaciones con estudiantes.",
       onConfirm: async () => {
-        await deleteClassroom(classroom.idClassroom);
-        showToast("Aula eliminada correctamente", "success");
+        try {
+          await deleteClassroom(
+            classroom.idClassroom
+          );
+
+          showToast(
+            "Aula eliminada correctamente",
+            "success"
+          );
+        } catch (error) {
+          showToast(
+            error.message ||
+            "No se pudo eliminar el aula",
+            "error"
+          );
+        }
       },
     });
   };
-  
+
+  // EDITAR AULA
   const handleEditClassroom = (classroom) => {
     setEditingClassroom(classroom);
     editClassroomModal.openModal();
   };
-  //headers de la tabla aulas
-  const classroomHeaders = ["Año", "Grado", "Sección", "Acciones"];
 
-  const renderClassroomRow = (classroom, index) => (
+  // HEADERS
+  const classroomHeaders = [
+    "Año",
+    "Grado",
+    "Sección",
+    "Acciones",
+  ];
+
+  // FILA
+  const renderClassroomRow = (
+    classroom,
+    index
+  ) => (
     <tr
       key={classroom.idClassroom ?? index}
       className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
     >
-      <td className="px-6 py-4">{classroom.year}</td>
-      <td className="px-6 py-4">{classroom.grade}°</td>
-      <td className="px-6 py-4">{classroom.section}</td>
+      <td className="px-6 py-4">
+        {classroom.year}
+      </td>
+      <td className="px-6 py-4">
+        {classroom.grade}°
+      </td>
+      <td className="px-6 py-4">
+        {classroom.section}
+      </td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => handleEditClassroom(classroom)}
+            onClick={() =>
+              handleEditClassroom(classroom)
+            }
             className="text-blue-700 hover:underline"
             title="Editar"
           >
             <FaEdit size={16} />
           </button>
+
           <button
-            onClick={() => handleDeleteClassroom(classroom)}
+            onClick={() =>
+              handleDeleteClassroom(classroom)
+            }
             className="text-red-600 hover:underline"
             title="Eliminar"
           >
@@ -120,21 +220,30 @@ function AcademicCatalog({
     </tr>
   );
 
-  const totalClassroomStudents = `TOTAL: ${totalClassrooms}`
   return (
     <div className="mt-8 flex flex-col gap-8 w-[96%] md:w-[90%] md:max-w-7xl mx-auto">
 
-      {/* GRADOS Y SECCIONES */}
+      {/*GRADOS Y SECCIONES*/}
+
       <GradeAndSeccions
-        loadingGrades={loadingGrades}
-        loadingSections={loadingSections}
+        loadingGrades={loadingClassrooms}
+        loadingSections={loadingClassrooms}
         grades={grades}
-        getSectionsForGrade={getSectionsForGrade}
-        handleDeleteGrade={handleDeleteGrade}
-        handleDeleteSection={handleDeleteSection}
+        getSectionsForGrade={
+          getSectionsForGrade
+        }
+        handleDeleteGrade={
+          handleDeleteGrade
+        }
+        handleDeleteSection={
+          handleDeleteSection
+        }
       />
-      {/* AULAS */}
+
+      {/*AULAS*/}
+
       <div className="flex flex-col gap-4">
+
         <TitleAndIcon
           icon={MdMeetingRoom}
           title="AULAS"
@@ -143,45 +252,115 @@ function AcademicCatalog({
           sizeIcon={24}
         />
 
+        {/* FILTROS*/}
+
+        <Filters
+          search={search}
+          onSearchChange={(value) => {
+            setMySearch(value);
+            setPage(1);
+          }}
+          searchPlaceholder="Buscar aula...."
+          selects={[
+            {
+              name: "year",
+              value: yearFilter,
+              onChange: (value) => {
+                setYearFilter(value);
+                setPage(1);
+              },
+              placeholder: "Año",
+              data: years,
+              valueKey: "idYear",
+              labelKey: "year",
+            },
+
+            {
+              name: "grade",
+              value: gradeFilter,
+              onChange: (value) => {
+                setGradeFilter(value);
+                setPage(1);
+              },
+              placeholder: "Grado",
+              data: grades,
+              valueKey: "idGrade",
+              labelKey: "level",
+            },
+
+            {
+              name: "section",
+              value: sectionFilter,
+              onChange: (value) => {
+                setSectionFilter(value);
+                setPage(1);
+              },
+              placeholder: "Sección",
+              data: sectionsForFilter,
+              valueKey: "section",
+              labelKey: "section",
+            },
+          ]}
+        />
+
+        {/*TABLA*/}
         {loadingClassrooms ? (
-          <p className="text-gray-500 text-sm py-4">Cargando aulas...</p>
+          <p className="text-gray-500 text-sm py-4">
+            Cargando aulas...
+          </p>
         ) : (
           <>
             <Table
               headers={classroomHeaders}
               data={classrooms}
-              renderRow={renderClassroomRow}
+              renderRow={
+                renderClassroomRow
+              }
               emptyMessage="No hay aulas registradas aún"
             />
-          <Paragraph
-            text = {totalClassroomStudents}
-            weight = "bold"
-            variant = "primary"
-          />
+            <Paginations
+              total={totalClassrooms}
+              page={page}
+              setPage={setPage}
+              amount={classrooms}
+            />
           </>
         )}
       </div>
 
-      {/* Modal confirmación */}
+      {/* MODAL CONFIRMACIÓN*/}
       {config && (
         <ModalConfirm
           title={config.title}
-          description={config.description}
-          onConfirm={config.onConfirm}
+          description={
+            config.description
+          }
+          onConfirm={
+            config.onConfirm
+          }
           closeModal={closeConfirm}
-          variant={config.variant ?? "danger"}
+          variant={
+            config.variant ?? "danger"
+          }
         />
       )}
 
-      {/* Modal editar aula */}
-      {editClassroomModal.isOpen && editingClassroom && (
-        <ModalCreateClassroom
-          mode="edit"
-          initialData={editingClassroom}
-          closeModal={editClassroomModal.closeModal}
-          onSuccess={refetchClassrooms}
-        />
-      )}
+      {/* MODAL EDITAR AULA*/}
+      {editClassroomModal.isOpen &&
+        editingClassroom && (
+          <ModalCreateClassroom
+            mode="edit"
+            initialData={
+              editingClassroom
+            }
+            closeModal={
+              editClassroomModal.closeModal
+            }
+            onSuccess={
+              refetchClassrooms
+            }
+          />
+        )}
     </div>
   );
 }

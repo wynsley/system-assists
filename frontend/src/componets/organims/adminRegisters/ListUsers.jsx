@@ -5,14 +5,14 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 import { LuBookOpenCheck } from "react-icons/lu"; // ícono para "asignar secciones"
 import { Table } from "../tableReusable";
 import { ROLE_LABELS } from "../../../config/roleLabels";
-import { PaginationUSers } from "../../molecules/adminRegisters/paginationUsers";
+import { Paginations } from "../../molecules/adminRegisters/Paginations";
 //hooks
 import { useUsers } from "../../../hooks/hoocksAdmin/useUsers";
 import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
-import { UserFilters } from "../../molecules/adminRegisters/filtersUsers";
+import { Filters } from "../../molecules/adminRegisters/filters";
 //modales
 import { ModalRegisterUser } from "../../modals/adminRegisters/modalReegisterUsers";
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
@@ -146,12 +146,27 @@ function ListUsers() {
         weight='bold'
         sizeIcon={30}
       />
+      {/*Filtros*/}
 
-      <UserFilters
+      <Filters
         search={search}
-        onSearchChange={(value) => { setSearch(value); setPage(1); }}
-        role={role}
-        onRoleChange={(value) => { setRole(value); setPage(1); }}
+        onSearchChange={(value) => {
+          setSearch(value);
+          setPage(1);
+        }}
+        searchPlaceholder="Buscar usuario..."
+        selects={[
+          {
+            name: "role",
+            value: role,
+            onChange: (value) => {
+              setRole(value);
+              setPage(1);
+            },
+            placeholder: "Roles",
+            data: ROLE_LABELS,
+          },
+        ]}
       />
 
       {error && <span className="text-sm text-red-600">{error}</span>}
@@ -164,11 +179,11 @@ function ListUsers() {
             emptyMessage="No se encontraron usuarios"
           />
         </div>
-        <PaginationUSers
+        <Paginations
           total={total}
           setPage={setPage}
           page={page}
-          users={users}
+          amount={users}
         />
       </div>
 

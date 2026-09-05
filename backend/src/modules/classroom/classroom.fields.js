@@ -13,15 +13,18 @@ const classroomFields = {
       },
     },
   },
+
   update: ["year", "idSection"],
   select: {
     idClassroom: true,
     year: true,
     section: {
       select: {
+        idSection: true,      
         name: true,
         grade: {
           select: {
+            idGrade: true,   
             level: true,
           },
         },

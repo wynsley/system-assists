@@ -1,6 +1,6 @@
 import { HiOutlineClipboardDocumentList } from "react-icons/hi2"
 import { FaUserGraduate, FaUserPlus } from "react-icons/fa";
-import { BsQrCode } from "react-icons/bs";
+import { SiGoogleclassroom } from "react-icons/si";
 import { TitleIconLink } from "../../molecules/titleIconLink"
 import { CardsQuickAccesAdmin } from "./cardsQuickAccesAdmin"
 
@@ -19,8 +19,8 @@ function LeftContent () {
       href : '/admin/register-user'
     },
     {
-      label: "CODIGOS QR",
-      icon : <BsQrCode size={30}/>,
+      label: "GESTIÓN ACADÉMICA",
+      icon : <SiGoogleclassroom  size={30}/>,
       href : '/admin/generateQR'
     },
   ]

@@ -7,6 +7,7 @@ function useAttendance({
   search,
   grade,
   section,
+  date,
   fetchSummary = false,
   fetchBehavior = false,
 } = {}) {
@@ -14,17 +15,19 @@ function useAttendance({
   const [total, setTotal] = useState(0);
   const [summaryToday, setSummaryToday] = useState(null);
   const [behaviorSummary, setBehaviorSummary] = useState(null);
+  const [filterOptions, setFilterOptions] = useState({ grades: [], sections: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  // (filtro por fecha).
+  const targetDate = date || new Date().toISOString().split("T")[0];
 
-  // ── Roster del día (ya viene resuelto desde el backend) ─────────────────
+  // ── Roster del día/fecha filtrada (ya viene resuelto desde el backend) ──
   const buildTable = useCallback(async () => {
     const params = new URLSearchParams();
     params.set("limit", limit);
     params.set("page", page);
-    params.set("date", today);
+    params.set("date", targetDate);
     if (search) params.set("search", search);
     if (grade) params.set("grade", grade);
     if (section) params.set("section", section);
@@ -38,7 +41,6 @@ function useAttendance({
       return;
     }
 
-    //Concatenamos datos del estudainte para renderizarlos
     const tableRows = (data.data ?? []).map((row) => ({
       idStudent:    row.student.idStudent,
       fullname:     `${row.student.firstname} ${row.student.lastname}`,
@@ -59,7 +61,20 @@ function useAttendance({
 
     setRows(tableRows);
     setTotal(data.pagination?.total ?? tableRows.length);
-  }, [search, grade, section, page, limit, today]);
+  }, [search, grade, section, page, limit, targetDate]);
+
+  // ── Opciones de filtro: grados y secciones (según el rol, desde backend) ──
+  const fetchFilterOptions = useCallback(async () => {
+    const { ok, data } = await apiFetch("/attendance/filters", "GET");
+    if (!ok || !data?.success) {
+      setFilterOptions({ grades: [], sections: [] });
+      return;
+    }
+    setFilterOptions({
+      grades: data.data?.grades ?? [],
+      sections: data.data?.sections ?? [],
+    });
+  }, []);
 
   // ── Resumen del día ────────────────────────────────────────────────────
   const fetchSummaryToday = useCallback(async () => {
@@ -89,8 +104,9 @@ function useAttendance({
       buildTable(),
       fetchSummaryToday(),
       fetchBehaviorSummary(),
+      fetchFilterOptions(),
     ]);
-  }, [buildTable, fetchSummaryToday, fetchBehaviorSummary]);
+  }, [buildTable, fetchSummaryToday, fetchBehaviorSummary, fetchFilterOptions]);
 
   useEffect(() => {
     const load = async () => {
@@ -189,12 +205,13 @@ function useAttendance({
     stats,
     summaryToday,
     behaviorSummary,
+    filterOptions,       // 🔹 { grades: [{level}], sections: [{name}] } para tus selects "Grados"/"Secciones"
     loading,
     error,
     refetch: refreshData,
     createAttendance,
     updateAttendance,
-    saveAttendance,     
+    saveAttendance,
     findStudentByDni,
   };
 }

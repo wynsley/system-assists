@@ -13,11 +13,13 @@ const mappersUtils = {
     };
   },
   formatClassroomOnly: (row) => ({
-    idClassroom: row.idClassroom,
-    year: row.year,
-    grade: row.section?.grade?.level ?? null,
-    section: row.section?.name ?? null,
-  }),
+  idClassroom: row.idClassroom,
+  year: row.year,
+  idSection: row.section?.idSection ?? null,
+  idGrade: row.section?.grade?.idGrade ?? null,
+  grade: row.section?.grade?.level ?? null,
+  section: row.section?.name ?? null,
+}),
   formatClassroomStudent: (row) => {
     return {
       idClassroomStudent: row.idClassroomStudent,

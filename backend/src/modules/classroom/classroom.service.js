@@ -19,7 +19,7 @@ const classroomService = {
     return mappersUtils.formatClassroomOnly(queryResult.classroom);
   },
 
-  get: async ({ page, limit, sortOrder, sortBy, search, year, status }) => {
+  get: async ({ page, limit, sortOrder, sortBy, search, year, status, grade, section }) => {
     const where = searchUtils.buildSearchWhere({
       search,
       numberFields: ["idClassroom"],
@@ -41,6 +41,15 @@ const classroomService = {
         status
       },
     });
+
+    if (grade || section) {
+      where.section = {
+        ...(where.section ?? {}),
+        ...(grade ? { grade: { level: grade } } : {}),
+        ...(section ? { name: section } : {}),
+      };
+    }
+
     const [classrooms, total] = await Promise.all([
       prisma.classroom.findMany({
         where,
