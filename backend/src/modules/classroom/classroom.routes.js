@@ -23,6 +23,13 @@ classroomRoutes.get(
 );
 
 classroomRoutes.get(
+  "/years",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN", "AUXILIAR"]),
+  classroomController.getYears,
+);
+
+classroomRoutes.get(
   "/:id",
   authMiddleware,
   authMiddlewareRole(["ADMIN", "AUXILIAR"]),

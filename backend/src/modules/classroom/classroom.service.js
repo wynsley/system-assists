@@ -79,6 +79,15 @@ const classroomService = {
     return mappersUtils.formatClassroomOnly(classroom);
   },
 
+  getYears: async () => {
+    const rows = await prisma.classroom.findMany({
+      distinct: ["year"],
+      select: { year: true },
+      orderBy: { year: "desc" },
+    });
+    return rows.map((r) => r.year);
+  },
+
   update: async ({ idClassroom, data }) => {
     const classroom = await prisma.classroom.findUnique({
       where: { idClassroom },

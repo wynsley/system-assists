@@ -70,6 +70,14 @@ const classroomController = {
     }
   },
 
+  getYears: async (req, res, next) => {
+    try {
+      const years = await classroomService.getYears();
+      return res.json({ success: true, data: years });
+    } catch (error) {
+      next(error);
+    }
+  },
   update: async (req, res, next) => {
     try {
       const { id: idClassroom } = await validateUtils.validateSchema({
