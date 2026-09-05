@@ -24,7 +24,6 @@ function useClassrooms({
   // OBTENER AULAS
   const fetchClassrooms = useCallback(async () => {
     const params = new URLSearchParams();
-
     const safeLimit = Math.min(limit, API_LIMITS.classroom);
 
     params.set("page", page);
@@ -46,33 +45,33 @@ function useClassrooms({
 
     setClassrooms(data.data ?? []);
     setTotal(data.pagination?.total ?? 0);
-
-    // Años derivados de las aulas ya traídas (no existe endpoint /academic-year)
-    const uniqueYears = [...new Set((data.data ?? []).map((c) => c.year))]
-      .sort((a, b) => b - a)
-      .map((y) => ({ idYear: y, year: y }));
-    setYears(uniqueYears);
+    
   }, [page, limit, search, year, grade, section]);
 
   // OBTENER CATÁLOGOS (grados y secciones)
   const fetchCatalogs = useCallback(async () => {
-    const [gradesResponse, sectionsResponse] = await Promise.all([
+    const [yearsResponse, gradesResponse, sectionsResponse] = await Promise.all([
+      apiFetch("/classroom/years", "GET"),
       apiFetch("/grade?limit=10", "GET"),
-      apiFetch("/section?limit=10", "GET"),
+      apiFetch("/section?limit=50", "GET"),
     ]);
 
+    if (!yearsResponse.ok || !yearsResponse.data?.success) {
+      throw new Error(yearsResponse.data?.message || "Error al obtener años");
+    }
     if (!gradesResponse.ok || !gradesResponse.data?.success) {
-      throw new Error(
-        gradesResponse.data?.message || "Error al obtener grados"
-      );
+      throw new Error(gradesResponse.data?.message || "Error al obtener grados");
     }
-
     if (!sectionsResponse.ok || !sectionsResponse.data?.success) {
-      throw new Error(
-        sectionsResponse.data?.message || "Error al obtener secciones"
-      );
+      throw new Error(sectionsResponse.data?.message || "Error al obtener secciones");
     }
 
+    const uniqueYears = (yearsResponse.data.data ?? []).map((y) => ({
+      idYear: y,
+      year: y,
+    }));
+
+    setYears(uniqueYears);
     setGrades(gradesResponse.data.data ?? []);
     setSections(sectionsResponse.data.data ?? []);
   }, []);
@@ -80,7 +79,7 @@ function useClassrooms({
   // OBTENER TODO
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    setError(null);                                             
+    setError(null);
 
     try {
       await Promise.all([fetchClassrooms(), fetchCatalogs()]);

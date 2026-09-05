@@ -304,28 +304,20 @@ function AcademicCatalog({
         />
 
         {/*TABLA*/}
-        {loadingClassrooms ? (
-          <p className="text-gray-500 text-sm py-4">
-            Cargando aulas...
-          </p>
-        ) : (
-          <>
-            <Table
-              headers={classroomHeaders}
-              data={classrooms}
-              renderRow={
-                renderClassroomRow
-              }
-              emptyMessage="No hay aulas registradas aún"
-            />
-            <Paginations
-              total={totalClassrooms}
-              page={page}
-              setPage={setPage}
-              amount={classrooms}
-            />
-          </>
-        )}
+        <div className={loadingClassrooms ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+          <Table
+            headers={classroomHeaders}
+            data={classrooms}
+            renderRow={renderClassroomRow}
+            emptyMessage="No hay aulas registradas aún"
+          />
+          <Paginations
+            total={totalClassrooms}
+            page={page}
+            setPage={setPage}
+            amount={classrooms}
+          />
+        </div>
       </div>
 
       {/* MODAL CONFIRMACIÓN*/}

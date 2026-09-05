@@ -27,12 +27,26 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
       : ''
   );
 
+  // Año seleccionado para filtrar las aulas del select.
+  // Si es edición y el estudiante ya tiene aula, arrancamos con ese año.
+  const [classroomYear, setClassroomYear] = useState(
+    initialData?.classroomStudents?.[0]?.year
+      ? String(initialData.classroomStudents[0].year)
+      : String(new Date().getFullYear())
+  );
+
   const [error, setError] = useState('')
   const { loading, startLoading, stopLoading } = useLoading()
   const { showToast } = useToast()
   const modalRef = useClickOutside(closeModal)
   const schema = isEdit ? ValidationUpdateStudent : ValidationCreateStudent;
-  const { classrooms } = useClassrooms({ limit: 50 });
+
+  // Ahora filtramos por año, y subimos el limit para cubrir todas las
+  // aulas de ese año sin toparnos con el límite del backend.
+  const { classrooms, years } = useClassrooms({
+    limit: 50,
+    year: classroomYear || undefined,
+  });
 
   const validateField = async (name, value) => {
     try {
@@ -112,19 +126,38 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
         { text: 'Retirado', value: 'RETIRADO' },
       ]
     },
-    {
-      text: isEdit ? 'Aula (cambiar o asignar)' : 'Aula',
-      type: 'select', name: 'idClassroom', value: idClassroom,
-      onChange: (e) => setIdClassroom(e.target.value),
-      options: [
-        { text: 'Sin aula asignada', value: '' },
-        ...classrooms.map((c) => ({
-          text: `${c.year} — ${c.grade}° ${c.section}`,
-          value: String(c.idClassroom),
-        }))
-      ]
-    },
+    [
+      {
+        text: 'Año académico',
+        type: 'select', name: 'classroomYear', value: classroomYear,
+        onChange: (e) => {
+          setClassroomYear(e.target.value);
+          setIdClassroom(''); // al cambiar de año, limpia el aula elegida
+        },
+        options: [
+          { text: 'Selecciona un año', value: '' },
+          ...years.map((y) => ({
+            text: String(y.year),
+            value: String(y.year),
+          }))
+        ]
+      },
+      {
+        text: isEdit ? 'Aula (cambiar o asignar)' : 'Aula',
+        type: 'select', name: 'idClassroom', value: idClassroom,
+        onChange: (e) => setIdClassroom(e.target.value),
+        options: [
+          { text: 'Sin aula asignada', value: '' },
+          ...classrooms.map((c) => ({
+            text: `${c.year} — ${c.grade}° ${c.section}`,
+            value: String(c.idClassroom),
+          }))
+        ]
+      },
+    ],
   ]
+
+  // ... onSubmit y el resto quedan exactamente igual ...
 
   const onSubmit = async (e) => {
     e.preventDefault();
