@@ -34,6 +34,7 @@ model User {
   attendances        Attendance[]
   incidents          Incident[]
   classroomAuxiliars ClassroomAuxiliar[]
+  behaviorHistories BehaviorHistory[]
 }
 
 model Grade {
@@ -83,6 +84,7 @@ model Student {
   classroomStudents ClassroomStudent[]
   attendances       Attendance[]
   incidents         Incident[]
+  behavior Behavior?
 }
 
 enum Relationship {
@@ -178,23 +180,52 @@ model Attendance {
   @@index([idStudent, date])
 }
 
-enum IncidentType {
-  LEVE
-  GRAVE
-  MUY_GRAVE
+enum IncidentPolarity {
+  POSITIVO
+  NEGATIVO
 }
-
 model IncidentCatalog {
   idIncidentCatalog Int @id @default(autoincrement())
 
   name           String       @unique
   description    String?
-  type           IncidentType
-  pointsDeducted Int
+  type           IncidentPolarity
+  points         Int
 
   incidents Incident[]
 }
 
+enum BehaviorChangeType {
+  CALIFICACION
+  INCIDENTE
+}
+model Behavior {
+  idBehavior Int      @id @default(autoincrement())
+  idStudent  Int      @unique
+  score      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  student Student           @relation(fields: [idStudent], references: [idStudent])
+  history BehaviorHistory[]
+}
+model BehaviorHistory {
+  idHistory     Int                @id @default(autoincrement())
+  idBehavior    Int
+  previousScore Int
+  newScore      Int
+  description   String?            @db.VarChar(255)
+  idAuxiliar    Int
+  type          BehaviorChangeType
+  idIncident    Int?               @unique
+  date          DateTime           @default(now())
+
+  behavior Behavior  @relation(fields: [idBehavior], references: [idBehavior])
+  auxiliar User      @relation(fields: [idAuxiliar], references: [idUser])
+  incident Incident? @relation(fields: [idIncident], references: [idIncident])
+
+  @@index([idBehavior])
+}
 model Incident {
   idIncident Int @id @default(autoincrement())
 
@@ -211,6 +242,8 @@ model Incident {
   student         Student         @relation(fields: [idStudent], references: [idStudent])
   auxiliar        User            @relation(fields: [idAuxiliar], references: [idUser])
   incidentCatalog IncidentCatalog @relation(fields: [idIncidentCatalog], references: [idIncidentCatalog])
+
+  behaviorHistory BehaviorHistory?
 
   @@unique([idStudent, date, idIncidentCatalog])
   @@index([idAuxiliar])

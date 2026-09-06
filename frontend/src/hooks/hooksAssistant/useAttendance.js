@@ -207,7 +207,7 @@ function useAttendance({
     stats,
     summaryToday,
     behaviorSummary,
-    filterOptions,       // 🔹 { grades: [{level}], sections: [{name}] } para tus selects "Grados"/"Secciones"
+    filterOptions,       
     loading,
     error,
     refetch: refreshData,
