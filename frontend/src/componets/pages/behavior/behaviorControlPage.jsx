@@ -31,7 +31,6 @@ function BehaviorControlPage () {
         updateBehavior={updateBehavior}
       />
       <BehaviorRecords
-        students={students}
         updateBehavior={updateBehavior}
       />
     </MyTemplate>

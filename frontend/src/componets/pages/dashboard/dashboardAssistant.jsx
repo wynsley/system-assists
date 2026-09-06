@@ -9,8 +9,7 @@ function DashboardAssitantPage() {
   // DashboardAssistantPage.jsx
 const {
   stats,
-  attendances: recentActivity,
-  summaryToday,
+  rows: recentActivity,
   behaviorSummary,
   loading,
 } = useAttendance({

@@ -6,7 +6,7 @@ import { statusBadge } from "../../../config/assistant/attendanceBadges";
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
 import { useStudentFilters } from "../../../hooks/hooksAssistant/useStudentFilters";
 
-function AttendanceTable({ rows = [], lastScannedDni, saveAttendance }) {
+function AttendanceTable({ rows = [], lastScannedDni, saveAttendance, date, setDate, isToday, getLocalDateString }) {
 
   const {
     search,
@@ -19,11 +19,10 @@ function AttendanceTable({ rows = [], lastScannedDni, saveAttendance }) {
   } = useStudentFilters(rows);
 
   const { openRowId, openRow, closeRow } = useRowToggle();
-
   // Fila que está siendo editada (para renderizar el modal UNA sola vez, fuera de la tabla)
   const activeRow = filtered.find((r) => r.idStudent === openRowId) ?? null;
 
-  const isEditable = (row) => Boolean(row.status) && row.status !== "FALTA";
+  const isEditable = (row) => isToday && Boolean(row.status) && row.status !== "FALTA";
 
   const handleEdit = (row) => {
     if (!isEditable(row)) return; // sin escaneo no se puede editar
@@ -43,6 +42,9 @@ function AttendanceTable({ rows = [], lastScannedDni, saveAttendance }) {
         setSection={setSection}
         students={rows}
         filtered={filtered}
+        date={date}
+        setDate={setDate}
+        getLocalDateString={getLocalDateString}
       />
 
       <Table

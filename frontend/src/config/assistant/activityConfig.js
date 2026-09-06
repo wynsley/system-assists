@@ -1,10 +1,10 @@
 export const activityConfig = {
   PRESENTE: {
-    label: "Registro de ingreso",
+    label: "Presente",
     className: "bg-green-500 text-green-700",
   },
   TARDANZA: {
-    label: "Tardanza registrada",
+    label: "Tardanza ",
     className: "bg-yellow-500 text-yellow-700",
   },
   JUSTIFICADA: {
@@ -13,7 +13,7 @@ export const activityConfig = {
   },
   absent: {
     // fallback para cuando no hay registro
-    label: "Ausente",
+    label: "Falta",
     className: "bg-red-500 text-red-700",
   },
 };

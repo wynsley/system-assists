@@ -2,7 +2,7 @@ import { HiMagnifyingGlass } from "react-icons/hi2"
 
 function AttendanceSearch ({search, setSearch}) {
   return(
-    <div className="relative mb-3">
+    <div className="relative w-full">
         <HiMagnifyingGlass
           size={18}
           className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"

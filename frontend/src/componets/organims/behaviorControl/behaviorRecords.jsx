@@ -6,7 +6,7 @@ import { Table } from "../tableReusable"
 import { FiltersBehavior } from "./FilterSerchDowldBehavior"
 import { DespliegueDescription } from "../../molecules/behaviorControl/despliegueDescription"
 
-function BehaviorRecords({ behaviors, updateBehavior }) {
+function BehaviorRecords({ behaviors }) {
   const title = "HISTORIAL DE REGISTROS"
   //hook filtros y buscadores
   const {
@@ -31,7 +31,6 @@ function BehaviorRecords({ behaviors, updateBehavior }) {
   //controlar interaccion por fila
   const {
     openRowId,
-    toggleRow,
     closeRow,
     openRow,
   } = useRowToggle();

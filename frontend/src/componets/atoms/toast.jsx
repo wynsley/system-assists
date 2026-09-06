@@ -12,11 +12,11 @@ function Toast() {
   return (
     <div
       className={`
-        fixed top-5 right-5 z-[2000]
-        flex items-center gap-2
+        fixed  top-1/2 left-1/2 z-1000
+        flex items-center justify-center gap-2
         px-4 py-3 rounded-lg shadow-lg
         text-white font-poppins text-sm
-        animate-[slideDown_0.3s_ease-out]
+        animate-[slideDown_0.2s_ease-out]
         ${isSuccess ? "bg-green-600" : "bg-red-600"}
       `}
     >

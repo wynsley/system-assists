@@ -4,13 +4,12 @@ import { MdOutlineQrCode2 } from "react-icons/md";
 import { useModal } from "../../../hooks/hookModal/useModal";
 import { ModalScanner } from "../../modals/assistant/modalScanner";
 
-function BannerAttendanceAssitant ({findStudentByDni, createAttendance, onScanSuccess}) {
+function BannerAttendanceAssitant ({findStudentByDni, createAttendance, onScanSuccess, disabled = false}) {
 
   const {
     isOpen,
     openModal,
     closeModal,
-    toggleModal
   } = useModal()
 
   const handleCreateAttendance = async (params) => {
@@ -41,6 +40,8 @@ function BannerAttendanceAssitant ({findStudentByDni, createAttendance, onScanSu
         variant="danger"
         className="flex items-center gap-2"
         onClick={openModal}
+        disabled = {disabled}
+        title={disabled ? "Solo puedes escanear en la fecha actual" : undefined} 
       > 
         <span>Esacaner QR</span>
         <MdOutlineQrCode2 size={30} className=""/>

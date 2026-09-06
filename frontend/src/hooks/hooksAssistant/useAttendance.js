@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "../../helpers/apiFetch";
+import { getLocalDateString } from "../../utils/date";
 
 function useAttendance({
   page = 1,
@@ -20,7 +21,8 @@ function useAttendance({
   const [error, setError] = useState(null);
 
   // (filtro por fecha).
-  const targetDate = date || new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
+  const targetDate = date || today;
 
   // ── Roster del día/fecha filtrada (ya viene resuelto desde el backend) ──
   const buildTable = useCallback(async () => {
