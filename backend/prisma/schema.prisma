@@ -210,7 +210,7 @@ model AcademicPeriod {
 
 model Behavior {
   idBehavior Int      @id @default(autoincrement())
-  idStudent  Int      @unique
+  idStudent  Int      
   idPeriod   Int      
   score      Int      @default(0)
   createdAt  DateTime @default(now())

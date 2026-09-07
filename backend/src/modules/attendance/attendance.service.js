@@ -8,7 +8,7 @@ import { parentService } from "../parent/parent.service.js";
 import { studentService } from "../student/student.service.js";
 import { userService } from "../user/user.service.js";
 import { attendanceFields } from "./attendance.fields.js";
-import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js" ;
+import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js";
 import { behaviorUtils } from "../../utils/behavior.utils.js";
 
 const attendanceService = {
