@@ -84,7 +84,7 @@ model Student {
   classroomStudents ClassroomStudent[]
   attendances       Attendance[]
   incidents         Incident[]
-  behavior Behavior?
+  behavior Behavior[]
 }
 
 enum Relationship {
@@ -195,19 +195,37 @@ model IncidentCatalog {
   incidents Incident[]
 }
 
-enum BehaviorChangeType {
-  CALIFICACION
-  INCIDENTE
+model AcademicPeriod {
+  idPeriod  Int      @id @default(autoincrement())
+  year      Int
+  bimester  Int      // 1 a 4
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+
+  behaviors Behavior[]
+
+  @@unique([year, bimester])
+  @@index([startDate, endDate])
 }
+
 model Behavior {
   idBehavior Int      @id @default(autoincrement())
   idStudent  Int      @unique
+  idPeriod   Int      
   score      Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   student Student           @relation(fields: [idStudent], references: [idStudent])
+  period  AcademicPeriod    @relation(fields: [idPeriod], references: [idPeriod])
   history BehaviorHistory[]
+
+  @@unique([idStudent, idPeriod])
+}
+
+enum BehaviorChangeType {
+  CALIFICACION
+  INCIDENTE
 }
 model BehaviorHistory {
   idHistory     Int                @id @default(autoincrement())

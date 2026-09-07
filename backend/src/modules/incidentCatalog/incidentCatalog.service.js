@@ -20,12 +20,12 @@ const incidentCatalogService = {
   get: async ({ page, limit, sortOrder, sortBy, search }) => {
     const where = searchUtils.buildSearchWhere({
       search,
-      numberFields: ["idIncidentCatalog", "pointsDeducted"],
+      numberFields: ["idIncidentCatalog", "points"],
       stringFields: ["name", "description"],
       enumFields: [
         {
           field: "type",
-          values: ["LEVE", "GRAVE", "MUY_GRAVE"],
+          values: ["POSITIVO", "NEGATIVO"],
         },
       ],
     });

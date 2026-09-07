@@ -1,19 +1,68 @@
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import { behaviorUtils } from "../../utils/behavior.utils.js";
+import { mappersUtils } from "../../utils/mappers.utils.js";
 import { searchUtils } from "../../utils/search.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
 import { incidentFields } from "./incident.fields.js";
 
 const incidentService = {
   create: async (data) => {
+    const { idStudent, idIncidentCatalog, idAuxiliar, date, note } = data;
+
+    const catalog = await prisma.incidentCatalog.findUnique({
+      where: { idIncidentCatalog },
+    });
+
+    if (!catalog) {
+      throw new AppError("Registro no encontrado", 404, [
+        { field: "idIncidentCatalog", message: "No existe el tipo de incidente indicado" },
+      ]);
+    }
+
+    const delta = catalog.type === "POSITIVO" ? catalog.points : -catalog.points;
+
     const queryResult = await prisma.$transaction(async (prisma) => {
+      let behavior = await prisma.behavior.findUnique({ where: { idStudent } });
+      const previousScore = behavior?.score ?? 0;
+
+      if (delta > 0 && previousScore >= 20) {
+        throw new AppError("El estudiante ya tiene la nota máxima (20).", 400, [
+          { field: "idStudent", message: "El estudiante ya tiene la nota máxima (20)." },
+        ]);
+      }
+
+      const newScore = Math.min(20, Math.max(0, previousScore + delta));
+
+      behavior = behavior
+        ? await prisma.behavior.update({ where: { idStudent }, data: { score: newScore } })
+        : await prisma.behavior.create({ data: { idStudent, score: newScore } });
+
       const incident = await prisma.incident.create({
-        data,
+        data: { idStudent, idAuxiliar, idIncidentCatalog, date, note },
         select: incidentFields.create,
       });
-      return { incident };
+
+      await prisma.behaviorHistory.create({
+        data: {
+          idBehavior: behavior.idBehavior,
+          previousScore,
+          newScore,
+          description: note ?? catalog.name,
+          idAuxiliar,
+          type: "INCIDENTE",
+          idIncident: incident.idIncident,
+        },
+      });
+
+      return { incident, behavior };
     });
-    return queryResult.incident;
+
+    return {
+      ...queryResult.incident,
+      behaviorScore: queryResult.behavior.score,
+      scale: behaviorUtils.getScale(queryResult.behavior.score),
+    };
   },
 
   get: async ({ page, limit, sortOrder, sortBy, search, incidentCatalog }) => {
@@ -40,7 +89,7 @@ const incidentService = {
       }),
       prisma.incident.count({ where }),
     ]);
-    return [incidents, total];
+    return [incidents.map(mappersUtils.formatIncident), total];
   },
 
   getById: async ({ idIncident }) => {

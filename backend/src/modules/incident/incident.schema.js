@@ -27,10 +27,6 @@ const incidentSchema = {
         label: "El ID del estudiante",
         required: true,
       }),
-      idAuxiliar: idField({
-        label: "El ID del auxiliar",
-        required: true,
-      }),
       idIncidentCatalog: idField({
         label: "El ID del catálogo de incidentes",
         required: true,
@@ -55,10 +51,6 @@ const incidentSchema = {
       }),
       idStudent: idField({
         label: "El ID del estudiante",
-        required: false,
-      }),
-      idAuxiliar: idField({
-        label: "El ID del auxiliar",
         required: false,
       }),
       idIncidentCatalog: idField({

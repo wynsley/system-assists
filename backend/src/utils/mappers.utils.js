@@ -13,13 +13,13 @@ const mappersUtils = {
     };
   },
   formatClassroomOnly: (row) => ({
-  idClassroom: row.idClassroom,
-  year: row.year,
-  idSection: row.section?.idSection ?? null,
-  idGrade: row.section?.grade?.idGrade ?? null,
-  grade: row.section?.grade?.level ?? null,
-  section: row.section?.name ?? null,
-}),
+    idClassroom: row.idClassroom,
+    year: row.year,
+    idSection: row.section?.idSection ?? null,
+    idGrade: row.section?.grade?.idGrade ?? null,
+    grade: row.section?.grade?.level ?? null,
+    section: row.section?.name ?? null,
+  }),
   formatClassroomStudent: (row) => {
     return {
       idClassroomStudent: row.idClassroomStudent,
@@ -48,7 +48,7 @@ const mappersUtils = {
       phone: row.auxiliar?.phone ?? null,
     },
   }),
-  
+
   formatAttendance: (row) => ({
     idAttendance: row.idAttendance,
     date: row.date,
@@ -66,15 +66,33 @@ const mappersUtils = {
       status: row.student.status,
       classroom: row.student.classroomStudents[0]
         ? {
-            idClassroom: row.student.classroomStudents[0].idClassroom,
-            year: row.student.classroomStudents[0].classroom?.year ?? null,
-            grade:
-              row.student.classroomStudents[0].classroom?.section?.grade
-                ?.level ?? null,
-            section:
-              row.student.classroomStudents[0].classroom?.section?.name ?? null,
-          }
+          idClassroom: row.student.classroomStudents[0].idClassroom,
+          year: row.student.classroomStudents[0].classroom?.year ?? null,
+          grade:
+            row.student.classroomStudents[0].classroom?.section?.grade
+              ?.level ?? null,
+          section:
+            row.student.classroomStudents[0].classroom?.section?.name ?? null,
+        }
         : null,
+    },
+  }),
+  formatIncident: (row) => ({
+    idIncident: row.idIncident,
+    date: row.date,
+    note: row.note,
+    incidentType: row.incidentCatalog?.type ?? null,
+    points: row.incidentCatalog?.points ?? null,
+    incidentName: row.incidentCatalog?.name ?? null,
+    student: {
+      idStudent: row.student.idStudent,
+      fullname: `${row.student.firstname} ${row.student.lastname}`,
+      grade: row.student.classroomStudents?.[0]?.classroom?.section?.grade?.level ?? null,
+      section: row.student.classroomStudents?.[0]?.classroom?.section?.name ?? null,
+    },
+    auxiliar: {
+      idUser: row.auxiliar?.idUser ?? null,
+      fullname: `${row.auxiliar?.firstname ?? ""} ${row.auxiliar?.lastname ?? ""}`.trim(),
     },
   }),
 };

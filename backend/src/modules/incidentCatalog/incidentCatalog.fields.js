@@ -4,15 +4,15 @@ const incidentCatalogFields = {
     name: true,
     description: true,
     type: true,
-    pointsDeducted: true,
+    points: true,
   },
-  update: ["name", "description", "type", "pointsDeducted"],
+  update: ["name", "description", "type", "points"],
   select: {
     idIncidentCatalog: true,
     name: true,
     description: true,
     type: true,
-    pointsDeducted: true,
+    points: true,
   },
   sort: ["name", "type", "pointsDeducted"],
   search: [
@@ -20,9 +20,9 @@ const incidentCatalogFields = {
     "name",
     "description",
     "type",
-    "pointsDeducted",
+    "points",
   ],
-  type: ["LEVE", "GRAVE", "MUY_GRAVE"],
+  type: ["POSITIVO", "NEGATIVO"],
 };
 
 export { incidentCatalogFields };

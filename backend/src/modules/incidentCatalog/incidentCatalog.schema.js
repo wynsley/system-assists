@@ -30,7 +30,7 @@ const incidentCatalogSchema = {
         states: incidentCatalogFields.type,
         required: true,
       }),
-      pointsDeducted: numericField({
+      points: numericField({
         label: "Los puntos a deducir",
         min: 1,
         max: 100,
@@ -59,10 +59,10 @@ const incidentCatalogSchema = {
         states: incidentCatalogFields.type,
         required: false,
       }),
-      pointsDeducted: numericField({
+      points: numericField({
         label: "Los puntos a deducir",
-        min: 1,
-        max: 100,
+        min: 0,
+        max: 20,
         required: false,
       }),
     })

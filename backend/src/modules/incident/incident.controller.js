@@ -10,7 +10,9 @@ const incidentController = {
         data: req.body,
       });
 
-      const queryResult = await incidentService.create(validate);
+      const idAuxiliar = req.user.sub;
+
+      const queryResult = await incidentService.create({ ...validate, idAuxiliar });
 
       return res.json({
         success: true,

@@ -9,7 +9,7 @@ const incidentFields = {
         name: true,
         description: true,
         type: true,
-        pointsDeducted: true,
+        points: true,
       },
     },
     student: {
@@ -20,6 +20,21 @@ const incidentFields = {
         email: true,
         phone: true,
         status: true,
+        classroomStudents: {
+          select: {
+            classroom: {
+              select: {
+                year: true,
+                section: {
+                  select: {
+                    name: true,
+                    grade: { select: { level: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
         studentParents: {
           select: {
             relationship: true,
@@ -48,15 +63,14 @@ const incidentFields = {
     createdAt: true,
     updatedAt: true,
   },
+
   update: [
     "date",
-    "incidentCatalog",
     "note",
     "idStudent",
-    "idAuxiliar",
     "idIncidentCatalog",
   ],
-  
+
   select: {
     date: true,
     idIncident: true,
@@ -67,7 +81,7 @@ const incidentFields = {
         name: true,
         description: true,
         type: true,
-        pointsDeducted: true,
+        points: true,
       },
     },
     student: {
@@ -78,6 +92,21 @@ const incidentFields = {
         email: true,
         phone: true,
         status: true,
+        classroomStudents: {
+          select: {
+            classroom: {
+              select: {
+                year: true,
+                section: {
+                  select: {
+                    name: true,
+                    grade: { select: { level: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
         studentParents: {
           select: {
             relationship: true,
@@ -96,12 +125,13 @@ const incidentFields = {
     },
     auxiliar: {
       select: {
-      idUser: true,
-      firstname: true,
-      lastname: true,
-  }
-}
+        idUser: true,
+        firstname: true,
+        lastname: true,
+      },
+    },
   },
+
   sort: [
     "date",
     "incidentCatalog.name",

@@ -8,6 +8,8 @@ import { parentService } from "../parent/parent.service.js";
 import { studentService } from "../student/student.service.js";
 import { userService } from "../user/user.service.js";
 import { attendanceFields } from "./attendance.fields.js";
+import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js" ;
+import { behaviorUtils } from "../../utils/behavior.utils.js";
 
 const attendanceService = {
   create: async ({ status, note, idStudent }, idAuxiliar) => {
@@ -69,7 +71,7 @@ const attendanceService = {
     // Filtro de aula/sección/grado (solo activos)
     const classroomFilter = { status: "ACTIVO" };
 
-    //Restringe a las aulas asignadas al auxiliar (si aplica)
+    // Restringe a las aulas asignadas al auxiliar (si aplica)
     if (idAuxiliar) {
       classroomFilter.classroomAuxiliars = {
         some: { idAuxiliar },
@@ -110,33 +112,31 @@ const attendanceService = {
       prisma.classroomStudent.count({ where }),
     ]);
 
-    //Traemos SOLO las asistencias de esos estudiantes, en la fecha pedida
-    const idStudents = classroomStudents.map(
-      (cs) => cs.student.idStudent
-    );
+    // Traemos SOLO las asistencias de esos estudiantes, en la fecha pedida
+    const idStudents = classroomStudents.map((cs) => cs.student.idStudent);
 
     const attendances = idStudents.length
       ? await prisma.attendance.findMany({
-        where: {
-          idStudent: { in: idStudents },
-          date: {
-            gte: targetDate,
-            lt: nextDay,
+          where: {
+            idStudent: { in: idStudents },
+            date: {
+              gte: targetDate,
+              lt: nextDay,
+            },
           },
-        },
-        select: {
-          idAttendance: true,
-          date: true,
-          status: true,
-          note: true,
-          idStudent: true,
-        },
-      })
+          select: {
+            idAttendance: true,
+            date: true,
+            status: true,
+            note: true,
+            idStudent: true,
+          },
+        })
       : [];
 
     const attendanceMap = new Map(attendances.map((a) => [a.idStudent, a]));
 
-    //Cruzamos en memoria (rápido: es solo esta página, máx 35 registros)
+    // Cruzamos en memoria (rápido: es solo esta página, máx 35 registros)
     const roster = classroomStudents.map((cs) => {
       const formatted = mappersUtils.formatClassroomStudent(cs);
       const attendance = attendanceMap.get(cs.student.idStudent);
@@ -144,7 +144,7 @@ const attendanceService = {
       return {
         ...formatted,
         idAttendance: attendance?.idAttendance ?? null,
-        status: attendance?.status ?? null, //null = sin registro, lo maneja el frontend
+        status: attendance?.status ?? null, // null = sin registro, lo maneja el frontend
         date: attendance?.date ?? null,
         note: attendance?.note ?? null,
       };
@@ -526,26 +526,25 @@ const attendanceService = {
     });
   },
 
+  // 🔹 Migrado: ahora lee Behavior.score del bimestre activo,
+  // en vez de recalcular restando incidentes desde 20.
   getBehaviorSummaryToday: async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    let period;
+    try {
+      period = await academicPeriodService.getCurrent();
+    } catch {
+      // Sin bimestre activo configurado: no rompemos el dashboard,
+      // devolvemos todo en 0.
+      return { AD: 0, A: 0, B: 0, C: 0 };
+    }
 
     const students = await prisma.student.findMany({
-      where: {
-        status: "ACTIVO",
-      },
+      where: { status: "ACTIVO" },
       select: {
-        incidents: {
-          include: {
-            incidentCatalog: {
-              select: {
-                pointsDeducted: true,
-              },
-            },
-          },
+        idStudent: true,
+        behaviors: {
+          where: { idPeriod: period.idPeriod },
+          select: { score: true },
         },
       },
     });
@@ -556,28 +555,19 @@ const attendanceService = {
     let C = 0;
 
     for (const student of students) {
-      const deducted = student.incidents.reduce(
-        (sum, i) => sum + i.incidentCatalog.pointsDeducted,
-        0,
-      );
+      const score = student.behaviors[0]?.score ?? 0;
+      const scale = behaviorUtils.getScale(score);
 
-      const score = Math.max(0, 20 - deducted);
-
-      if (score >= 18) AD++;
-      else if (score >= 14) A++;
-      else if (score >= 11) B++;
+      if (scale === "AD") AD++;
+      else if (scale === "A") A++;
+      else if (scale === "B") B++;
       else C++;
     }
 
     const totalStudents = AD + A + B + C;
 
     if (totalStudents === 0) {
-      return {
-        AD: 0,
-        A: 0,
-        B: 0,
-        C: 0,
-      };
+      return { AD: 0, A: 0, B: 0, C: 0 };
     }
 
     AD = Math.round((AD / totalStudents) * 100);
@@ -585,14 +575,11 @@ const attendanceService = {
     B = Math.round((B / totalStudents) * 100);
     C = Math.round((C / totalStudents) * 100);
 
-    return {
-      AD,
-      A,
-      B,
-      C,
-    };
+    return { AD, A, B, C };
   },
 
+  // 🔹 Migrado: la conducta ya no se recalcula sumando incidentes del año,
+  // ahora lee directo Behavior.score del bimestre activo.
   getAttendanceSummaryByParent: async ({ idParent }) => {
     const parent = await userService.getById(idParent);
     const today = new Date();
@@ -638,28 +625,22 @@ const attendanceService = {
       delays.map((d) => [d.idStudent, d._count.idAttendance]),
     );
 
-    // Total de incidentes del año por estudiante
-    const incidents = await prisma.incident.findMany({
-      where: {
-        idStudent: { in: studentIds },
-        date: { gte: startYear, lt: endYear },
-      },
-      select: {
-        idStudent: true,
-        incidentCatalog: {
-          select: { pointsDeducted: true },
-        },
-      },
-    });
+    // 🔹 Nota de conducta del bimestre activo (en vez de sumar incidentes del año)
+    let period = null;
+    try {
+      period = await academicPeriodService.getCurrent();
+    } catch {
+      period = null;
+    }
 
-    const incidentMap = incidents.reduce((map, incident) => {
-      const current = map.get(incident.idStudent) ?? 0;
-      map.set(
-        incident.idStudent,
-        current + incident.incidentCatalog.pointsDeducted,
-      );
-      return map;
-    }, new Map());
+    const behaviors = period
+      ? await prisma.behavior.findMany({
+          where: { idStudent: { in: studentIds }, idPeriod: period.idPeriod },
+          select: { idStudent: true, score: true },
+        })
+      : [];
+
+    const behaviorMap = new Map(behaviors.map((b) => [b.idStudent, b.score]));
 
     const weekSummaries = await Promise.all(
       studentIds.map((idStudent) =>
@@ -673,10 +654,8 @@ const attendanceService = {
 
     const studentsSummary = await Promise.all(
       students.map(async ({ student }) => {
-        const deducted = incidentMap.get(student.idStudent) ?? 0;
-        const score = Math.max(0, 20 - deducted);
-        const conductGrade =
-          score >= 18 ? "AD" : score >= 14 ? "A" : score >= 11 ? "B" : "C";
+        const score = behaviorMap.get(student.idStudent) ?? 0;
+        const conductGrade = behaviorUtils.getScale(score);
 
         const { attendanceLate, total } = {
           attendanceLate: await prisma.attendance.count({
@@ -730,7 +709,7 @@ const attendanceService = {
           status: student.status,
           attendanceToday: attendanceMap.get(student.idStudent) ?? "FALTA",
           totalDelaysYear: delayMap.get(student.idStudent) ?? 0,
-          conductPointsYear: 20 - (incidentMap.get(student.idStudent) ?? 0),
+          conductPointsYear: score,
           conductYear: conductGrade,
           averageAttendanceWeek,
           daysPresent: {
@@ -749,13 +728,6 @@ const attendanceService = {
 export { attendanceService };
 
 /*
-
-
-enum StatusAssistance {
-  PRESENTE
-  TARDANZA
-  JUSTIFICADA
-}
 
 model Attendance {
   idAttendance Int              @id @default(autoincrement())
