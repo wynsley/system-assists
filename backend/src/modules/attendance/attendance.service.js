@@ -526,7 +526,7 @@ const attendanceService = {
     });
   },
 
-  // 🔹 Migrado: ahora lee Behavior.score del bimestre activo,
+  // Migrado: ahora lee Behavior.score del bimestre activo,
   // en vez de recalcular restando incidentes desde 20.
   getBehaviorSummaryToday: async () => {
     let period;
@@ -578,7 +578,7 @@ const attendanceService = {
     return { AD, A, B, C };
   },
 
-  // 🔹 Migrado: la conducta ya no se recalcula sumando incidentes del año,
+  //Migrado: la conducta ya no se recalcula sumando incidentes del año,
   // ahora lee directo Behavior.score del bimestre activo.
   getAttendanceSummaryByParent: async ({ idParent }) => {
     const parent = await userService.getById(idParent);
@@ -625,8 +625,8 @@ const attendanceService = {
       delays.map((d) => [d.idStudent, d._count.idAttendance]),
     );
 
-    // 🔹 Nota de conducta del bimestre activo (en vez de sumar incidentes del año)
-    let period = null;
+    // Nota de conducta del bimestre activo (en vez de sumar incidentes del año)
+    let period ;
     try {
       period = await academicPeriodService.getCurrent();
     } catch {

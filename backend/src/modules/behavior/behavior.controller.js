@@ -13,7 +13,7 @@ const behaviorController = {
       const user = req.user;
       const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
 
-      const { students, total } = await behaviorService.getRoster({
+      const { students, total, period } = await behaviorService.getRoster({
         ...validate,
         idAuxiliar,
       });
@@ -21,6 +21,7 @@ const behaviorController = {
       return res.json({
         success: true,
         data: students,
+        period,
         pagination: {
           page: validate.page,
           limit: validate.limit,
@@ -64,9 +65,9 @@ const behaviorController = {
       const user = req.user;
       const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
 
-      const students = await behaviorService.getConsolidado({ ...validate, idAuxiliar });
+      const {students, period } = await behaviorService.getConsolidado({ ...validate, idAuxiliar });
 
-      return res.json({ success: true, data: students });
+      return res.json({ success: true, data: students, period });
     } catch (error) {
       next(error);
     }

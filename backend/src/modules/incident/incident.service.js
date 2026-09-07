@@ -5,25 +5,26 @@ import { mappersUtils } from "../../utils/mappers.utils.js";
 import { searchUtils } from "../../utils/search.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
 import { incidentFields } from "./incident.fields.js";
+import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js";
 
 const incidentService = {
   create: async (data) => {
     const { idStudent, idIncidentCatalog, idAuxiliar, date, note } = data;
 
-    const catalog = await prisma.incidentCatalog.findUnique({
-      where: { idIncidentCatalog },
-    });
-
+    const catalog = await prisma.incidentCatalog.findUnique({ where: { idIncidentCatalog } });
     if (!catalog) {
       throw new AppError("Registro no encontrado", 404, [
         { field: "idIncidentCatalog", message: "No existe el tipo de incidente indicado" },
       ]);
     }
 
+    const period = await academicPeriodService.getCurrent();
     const delta = catalog.type === "POSITIVO" ? catalog.points : -catalog.points;
 
     const queryResult = await prisma.$transaction(async (prisma) => {
-      let behavior = await prisma.behavior.findUnique({ where: { idStudent } });
+      let behavior = await prisma.behavior.findUnique({
+        where: { idStudent_idPeriod: { idStudent, idPeriod: period.idPeriod } },
+      });
       const previousScore = behavior?.score ?? 0;
 
       if (delta > 0 && previousScore >= 20) {
@@ -35,8 +36,8 @@ const incidentService = {
       const newScore = Math.min(20, Math.max(0, previousScore + delta));
 
       behavior = behavior
-        ? await prisma.behavior.update({ where: { idStudent }, data: { score: newScore } })
-        : await prisma.behavior.create({ data: { idStudent, score: newScore } });
+        ? await prisma.behavior.update({ where: { idBehavior: behavior.idBehavior }, data: { score: newScore } })
+        : await prisma.behavior.create({ data: { idStudent, idPeriod: period.idPeriod, score: newScore } });
 
       const incident = await prisma.incident.create({
         data: { idStudent, idAuxiliar, idIncidentCatalog, date, note },
@@ -62,6 +63,7 @@ const incidentService = {
       ...queryResult.incident,
       behaviorScore: queryResult.behavior.score,
       scale: behaviorUtils.getScale(queryResult.behavior.score),
+      period,
     };
   },
 

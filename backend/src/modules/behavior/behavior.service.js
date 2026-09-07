@@ -3,16 +3,28 @@ import { validateUtils } from "../../utils/validate.utils.js";
 import { behaviorUtils } from "../../utils/behavior.utils.js";
 import { mappersUtils } from "../../utils/mappers.utils.js";
 import { classroomStudentFields } from "../classroomStudent/classroomStudent.fields.js";
+import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js";
+
+const NO_PERIOD_MESSAGE = "Aún no hay un bimestre activo configurado.";
 
 const behaviorService = {
-  // Lista de estudiantes con su nota/escala actual, filtrada por lo asignado al auxiliar
-  getRoster: async ({ page, limit, sortOrder, sortBy, search, grade, section, idAuxiliar }) => {
-    const classroomFilter = { status: "ACTIVO" };
+  
+  getRoster: async ({ page, limit, sortOrder, sortBy, search, grade, section, idAuxiliar, idPeriod }) => {
+    let period = null;
+    let message = null;
 
-    if (idAuxiliar) {
-      classroomFilter.classroomAuxiliars = { some: { idAuxiliar } };
+    if (idPeriod) {
+      period = await academicPeriodService.getById({ idPeriod }); // bimestre pasado: sí debe existir
+    } else {
+      try {
+        period = await academicPeriodService.getCurrent();
+      } catch {
+        message = NO_PERIOD_MESSAGE;
+      }
     }
 
+    const classroomFilter = { status: "ACTIVO" };
+    if (idAuxiliar) classroomFilter.classroomAuxiliars = { some: { idAuxiliar } };
     if (grade || section) {
       classroomFilter.section = {
         ...(grade ? { grade: { level: grade } } : {}),
@@ -44,9 +56,10 @@ const behaviorService = {
 
     const idStudents = classroomStudents.map((cs) => cs.student.idStudent);
 
-    const behaviors = idStudents.length
+    // Sin periodo activo: no hay nada que buscar en Behavior, todos quedan en 0
+    const behaviors = period && idStudents.length
       ? await prisma.behavior.findMany({
-          where: { idStudent: { in: idStudents } },
+          where: { idStudent: { in: idStudents }, idPeriod: period.idPeriod },
           select: { idBehavior: true, idStudent: true, score: true },
         })
       : [];
@@ -57,7 +70,6 @@ const behaviorService = {
       const formatted = mappersUtils.formatClassroomStudent(cs);
       const behavior = behaviorMap.get(cs.student.idStudent);
       const score = behavior?.score ?? 0;
-
       return {
         ...formatted,
         idBehavior: behavior?.idBehavior ?? null,
@@ -66,18 +78,21 @@ const behaviorService = {
       };
     });
 
-    return { students, total };
+    return { students, total, period, message };
   },
 
-  // Calificar (ajuste manual del auxiliar/profesor)
   calificar: async ({ idStudent, score, description, idAuxiliar }) => {
+    const period = await academicPeriodService.getCurrent();
+
     const result = await prisma.$transaction(async (prisma) => {
-      const existing = await prisma.behavior.findUnique({ where: { idStudent } });
+      const existing = await prisma.behavior.findUnique({
+        where: { idStudent_idPeriod: { idStudent, idPeriod: period.idPeriod } },
+      });
       const previousScore = existing?.score ?? 0;
 
       const behavior = existing
-        ? await prisma.behavior.update({ where: { idStudent }, data: { score } })
-        : await prisma.behavior.create({ data: { idStudent, score } });
+        ? await prisma.behavior.update({ where: { idBehavior: existing.idBehavior }, data: { score } })
+        : await prisma.behavior.create({ data: { idStudent, idPeriod: period.idPeriod, score } });
 
       await prisma.behaviorHistory.create({
         data: {
@@ -93,22 +108,22 @@ const behaviorService = {
       return behavior;
     });
 
-    return { ...result, scale: behaviorUtils.getScale(result.score) };
+    return { ...result, scale: behaviorUtils.getScale(result.score), period };
   },
 
-  // Consolidado para descarga (sin paginar, mismo filtro)
-  getConsolidado: async ({ grade, section, search, idAuxiliar }) => {
-    const { students } = await behaviorService.getRoster({
-      page: 1,
-      limit: 1000,
-      sortBy: "lastname",
+  getConsolidado: async ({ grade, section, search, idAuxiliar, idPeriod }) => {
+    const { students, period, message } = await behaviorService.getRoster({
+      page: 1, 
+      limit: 1000, 
+      sortBy: "lastname", 
       sortOrder: "asc",
-      search,
-      grade,
-      section,
-      idAuxiliar,
+      search, 
+      grade, 
+      section, 
+      idAuxiliar, 
+      idPeriod,
     });
-    return students;
+    return { students, period, message };
   },
 };
 
