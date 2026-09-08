@@ -10,12 +10,10 @@ function useAttendance({
   section,
   date,
   fetchSummary = false,
-  fetchBehavior = false,
 } = {}) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [summaryToday, setSummaryToday] = useState(null);
-  const [behaviorSummary, setBehaviorSummary] = useState(null);
   const [filterOptions, setFilterOptions] = useState({ grades: [], sections: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,19 +42,19 @@ function useAttendance({
     }
 
     const tableRows = (data.data ?? []).map((row) => ({
-      idStudent:    row.student.idStudent,
-      fullname:     `${row.student.firstname} ${row.student.lastname}`,
-      dni:          row.student.dni,
-      grade:        row.grade,
-      section:      row.section,
-      year:         row.year,
+      idStudent: row.student.idStudent,
+      fullname: `${row.student.firstname} ${row.student.lastname}`,
+      dni: row.student.dni,
+      grade: row.grade,
+      section: row.section,
+      year: row.year,
       idAttendance: row.idAttendance,
-      status:       row.status ?? "FALTA", // null del backend → FALTA en UI
+      status: row.status ?? "FALTA", // null del backend → FALTA en UI
       time: row.date
         ? new Date(row.date).toLocaleTimeString("es-PE", {
-            hour: "2-digit",
-            minute: "2-digit",
-          })
+          hour: "2-digit",
+          minute: "2-digit",
+        })
         : null,
       note: row.note ?? null,
     }));
@@ -81,41 +79,74 @@ function useAttendance({
   // ── Resumen del día ────────────────────────────────────────────────────
   const fetchSummaryToday = useCallback(async () => {
     if (!fetchSummary) return;
-    const { ok, data } = await apiFetch("/attendance/summary/today", "GET");
-    if (!ok || !data?.success) { setSummaryToday(null); return; }
-    const s = data.data;
-    setSummaryToday({
-      present:   s.present   ?? 0,
-      late:      s.late      ?? 0,
-      justified: s.justified ?? 0,
-      absent:    s.absent    ?? 0,
-      total: (s.present ?? 0) + (s.late ?? 0) + (s.justified ?? 0) + (s.absent ?? 0),
-    });
-  }, [fetchSummary]);
 
-  // ── Comportamiento AD/A/B/C ────────────────────────────────────────────
-  const fetchBehaviorSummary = useCallback(async () => {
-    if (!fetchBehavior) return;
-    const { ok, data } = await apiFetch("/attendance/summary/behavior", "GET");
-    if (!ok || !data?.success) { setBehaviorSummary(null); return; }
-    setBehaviorSummary(data.data);
-  }, [fetchBehavior]);
+    const params = new URLSearchParams();
+
+    params.set("date", targetDate);
+
+    if (grade) {
+      params.set("grade", grade);
+    }
+
+    if (section) {
+      params.set("section", section);
+    }
+
+    const { ok, data } = await apiFetch(
+      `/attendance/summary/today?${params.toString()}`,
+      "GET"
+    );
+
+    if (!ok || !data?.success) {
+      setSummaryToday(null);
+      return;
+    }
+
+    const summary = data.data ?? {};
+
+    setSummaryToday({
+      total: summary.total ?? 0,
+      present: summary.present ?? 0,
+      late: summary.late ?? 0,
+      justified: summary.justified ?? 0,
+      absent: summary.absent ?? 0,
+    });
+  }, [
+    fetchSummary,
+    targetDate,
+    grade,
+    section,
+  ]);
 
   const refreshData = useCallback(async () => {
     await Promise.all([
       buildTable(),
       fetchSummaryToday(),
-      fetchBehaviorSummary(),
       fetchFilterOptions(),
     ]);
-  }, [buildTable, fetchSummaryToday, fetchBehaviorSummary, fetchFilterOptions]);
+  }, [buildTable, fetchSummaryToday, fetchFilterOptions]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await refreshData();
-      setLoading(false);
+      setError(null);
+
+      try {
+        await refreshData();
+      } catch (err) {
+        console.error(
+          "Error al cargar asistencias:",
+          err
+        );
+        setError(
+          err.message ||
+          "Error al cargar asistencias"
+        );
+      } finally {
+        setLoading(false);
+      }
     };
+
     load();
   }, [refreshData]);
 
@@ -158,9 +189,13 @@ function useAttendance({
   // ── Buscar estudiante por DNI (para el escaneo QR) ────────────────────
   const findStudentByDni = useCallback(async (dni) => {
     const cleanDni = dni.trim();
-
+    const params = new URLSearchParams({
+      search: cleanDni,
+      limit : "20",
+      page : "1"
+    })
     const { ok, data } = await apiFetch(
-      `/student?search=${cleanDni}&limit=20&page=1`,
+      `/student?${params.toString()}`,
       "GET"
     );
 
@@ -184,30 +219,38 @@ function useAttendance({
       ...student,
       classroom: activeClassroom
         ? {
-            idClassroom: activeClassroom.idClassroom,
-            year:        activeClassroom.year,
-            grade:       activeClassroom.section?.grade?.level ?? null,
-            section:     activeClassroom.section?.name ?? null,
-          }
+          idClassroom: activeClassroom.idClassroom,
+          year: activeClassroom.year,
+          grade: activeClassroom.section?.grade?.level ?? null,
+          section: activeClassroom.section?.name ?? null,
+        }
         : null,
     };
   }, []);
 
   // ── Stats calculadas desde las filas visibles ────────────────────────────
   const stats = {
-    total:   rows.length,
-    present: rows.filter(r => r.status === "PRESENTE").length,
-    late:    rows.filter(r => r.status === "TARDANZA").length,
-    absent:  rows.filter(r => r.status === "FALTA").length,
-  };
+  total: rows.length,
+  present: rows.filter(
+    (row) => row.status === "PRESENTE"
+  ).length,
+  late: rows.filter(
+    (row) => row.status === "TARDANZA"
+  ).length,
+  justified: rows.filter(
+    (row) => row.status === "JUSTIFICADA"
+  ).length,
+  absent: rows.filter(
+    (row) => row.status === "FALTA"
+  ).length,
+};
 
   return {
     rows,
     total,
     stats,
     summaryToday,
-    behaviorSummary,
-    filterOptions,       
+    filterOptions,
     loading,
     error,
     refetch: refreshData,

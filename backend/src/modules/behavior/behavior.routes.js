@@ -14,6 +14,13 @@ behaviorRoutes.get(
   behaviorController.getRoster,
 );
 
+behaviorRoutes.get (
+  "/sumary",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN", "AUXILIAR"]),
+  behaviorController.getSummary,
+)
+
 behaviorRoutes.get(
   "/consolidado",
   authMiddleware,

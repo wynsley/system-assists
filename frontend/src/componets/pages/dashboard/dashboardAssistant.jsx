@@ -3,6 +3,7 @@ import { MyTemplate } from "../../templates/myTemplate";
 import { CardStatsAssitant } from "../../organims/dashdoardAssistant/cardStatsAssitant";
 import { MainDashboard } from "../../organims/dashdoardAssistant/mainDashboard";
 import { useAttendance } from "../../../hooks/hooksAssistant/useAttendance";
+import { useBehavior } from "../../../hooks/hooksAssistant/useBehavior";
 
 
 function DashboardAssitantPage() {
@@ -10,13 +11,15 @@ function DashboardAssitantPage() {
 const {
   stats,
   rows: recentActivity,
-  behaviorSummary,
   loading,
 } = useAttendance({
   limit: 10,
   fetchSummary: true,   // trae resumen del día
-  fetchBehavior: true,  // trae comportamiento AD/A/B/C
 });
+
+const {behaviorSummary} = useBehavior({
+  fetchBehavior :  true
+})
 
   // Transforma { AD, A, B, C } al formato que espera BehaviorPorcentage
   const behaviorGradePorcentage = behaviorSummary ? [

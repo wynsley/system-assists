@@ -45,6 +45,7 @@ const behaviorController = {
       next(error);
     }
   },
+  
   calificar: async (req, res, next) => {
     try {
       const validate = await validateUtils.validateSchema({

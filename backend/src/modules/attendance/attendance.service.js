@@ -1,5 +1,6 @@
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../utils/AppError.js";
+import { buildClassroomFilter } from "../../utils/classroom.utils.js";
 import { year } from "../../utils/date.utils.js";
 import { mappersUtils } from "../../utils/mappers.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
@@ -32,6 +33,39 @@ const attendanceService = {
         ],
       );
     }
+
+    const startOfDay = new Date()
+    startOfDay.setHours(0,0,0,0);
+
+    const endOfDay = new Date(startOfDay);
+    endOfDay.setDate(endOfDay.getDate() + 1);
+    
+    const existingAttendance =await prisma.attendance.findFirst({
+      where: {
+        idStudent,
+        date : {
+          gte : startOfDay,
+          lt: endOfDay,
+        },
+      },
+      select : {
+        idAttendance :  true,
+      },
+    });
+
+    if (existingAttendance) {
+      throw new AppError(
+        "El estudiante ya tiene una asistencia registrada hoy",
+      400,
+      [
+        {
+          field: "idStudent",
+          message:
+            "Ya existe un registro de asistencia para este estudiante hoy",
+        },
+      ],
+      )
+    }
     const queryResult = await prisma.$transaction(async (prisma) => {
       const attendance = await prisma.attendance.create({
         data: {
@@ -49,6 +83,7 @@ const attendanceService = {
     return queryResult.attendance;
   },
 
+
   get: async ({
     page,
     limit,
@@ -60,36 +95,43 @@ const attendanceService = {
     section,
     idAuxiliar,
   }) => {
-    // Rango del día a consultar (por defecto, hoy)
-    const targetDate = date ? new Date(`${date}T00:00:00`) : new Date();
+    const targetDate = date
+      ? new Date(`${date}T00:00:00`)
+      : new Date();
+
     targetDate.setHours(0, 0, 0, 0);
     const nextDay = new Date(targetDate);
     nextDay.setDate(nextDay.getDate() + 1);
 
-    // Filtro de aula/sección/grado (solo activos)
-    const classroomFilter = { status: "ACTIVO" };
+    const classroomFilter = buildClassroomFilter({
+      idAuxiliar,
+      grade,
+      section,
+    });
 
-    // Restringe a las aulas asignadas al auxiliar (si aplica)
-    if (idAuxiliar) {
-      classroomFilter.classroomAuxiliars = {
-        some: { idAuxiliar },
-      };
-    }
+    const studentFilter = {
+      status: "ACTIVO",
+    };
 
-    if (grade || section) {
-      classroomFilter.section = {
-        ...(grade ? { grade: { level: grade } } : {}),
-        ...(section ? { name: section } : {}),
-      };
-    }
-
-    // Filtro de búsqueda por nombre/DNI (solo estudiantes activos)
-    const studentFilter = { status: "ACTIVO" };
     if (search) {
       studentFilter.OR = [
-        { firstname: { contains: search, mode: "insensitive" } },
-        { lastname: { contains: search, mode: "insensitive" } },
-        { dni: { contains: search } },
+        {
+          firstname: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          lastname: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          dni: {
+            contains: search,
+          },
+        },
       ];
     }
 
@@ -98,59 +140,80 @@ const attendanceService = {
       student: studentFilter,
     };
 
-    // Traemos el "roster": todos los matriculados que cumplen el filtro
     const [classroomStudents, total] = await Promise.all([
       prisma.classroomStudent.findMany({
         where,
-        orderBy: validateUtils.buildOrderBy(sortBy, sortOrder),
+        orderBy: validateUtils.buildOrderBy(
+          sortBy,
+          sortOrder
+        ),
         skip: (page - 1) * limit,
         take: limit,
         select: classroomStudentFields.select,
       }),
-      prisma.classroomStudent.count({ where }),
+
+      prisma.classroomStudent.count({
+        where,
+      }),
     ]);
 
-    // Traemos SOLO las asistencias de esos estudiantes, en la fecha pedida
-    const idStudents = classroomStudents.map((cs) => cs.student.idStudent);
+    const idStudents = classroomStudents.map(
+      (cs) => cs.student.idStudent
+    );
 
     const attendances = idStudents.length
       ? await prisma.attendance.findMany({
-          where: {
-            idStudent: { in: idStudents },
-            date: {
-              gte: targetDate,
-              lt: nextDay,
-            },
+        where: {
+          idStudent: {
+            in: idStudents,
           },
-          select: {
-            idAttendance: true,
-            date: true,
-            status: true,
-            note: true,
-            idStudent: true,
+          date: {
+            gte: targetDate,
+            lt: nextDay,
           },
-        })
+        },
+        select: {
+          idAttendance: true,
+          date: true,
+          status: true,
+          note: true,
+          idStudent: true,
+        },
+      })
       : [];
 
-    const attendanceMap = new Map(attendances.map((a) => [a.idStudent, a]));
+    const attendanceMap = new Map(
+      attendances.map((a) => [
+        a.idStudent,
+        a,
+      ])
+    );
 
-    // Cruzamos en memoria (rápido: es solo esta página, máx 35 registros)
     const roster = classroomStudents.map((cs) => {
-      const formatted = mappersUtils.formatClassroomStudent(cs);
-      const attendance = attendanceMap.get(cs.student.idStudent);
+      const formatted =
+        mappersUtils.formatClassroomStudent(cs);
+
+      const attendance =
+        attendanceMap.get(cs.student.idStudent);
 
       return {
         ...formatted,
-        idAttendance: attendance?.idAttendance ?? null,
-        status: attendance?.status ?? null, // null = sin registro, lo maneja el frontend
-        date: attendance?.date ?? null,
-        note: attendance?.note ?? null,
+        idAttendance:
+          attendance?.idAttendance ?? null,
+        status:
+          attendance?.status ?? null,
+        date:
+          attendance?.date ?? null,
+        note:
+          attendance?.note ?? null,
       };
     });
 
-    return { attendances: roster, total };
+    return {
+      attendances: roster,
+      total,
+    };
   },
-
   // grados y secciones disponibles para los filtros del frontend.
   getFilterOptions: async ({ idAuxiliar } = {}) => {
     const where = { status: "ACTIVO" };
@@ -398,7 +461,6 @@ const attendanceService = {
         },
       },
     });
-
     const summary = {};
 
     // Total de estudiantes por grado
@@ -416,7 +478,6 @@ const attendanceService = {
           absent: 0,
         };
       }
-
       summary[level].total++;
     }
 
@@ -426,16 +487,13 @@ const attendanceService = {
         att.student.classroomStudents[0]?.classroom?.section?.grade?.level;
 
       if (!level) continue;
-
       switch (att.status) {
         case "PRESENTE":
           summary[level].present++;
           break;
-
         case "TARDANZA":
           summary[level].late++;
           break;
-
         case "JUSTIFICADA":
           summary[level].justified++;
           break;
@@ -446,64 +504,130 @@ const attendanceService = {
     for (const item of Object.values(summary)) {
       item.absent = item.total - item.present - item.late - item.justified;
     }
-
     return Object.values(summary).sort((a, b) => a.level - b.level);
   },
 
-  getAttendanceSummaryToday: async () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  getAttendanceSummaryToday: async ({
+    idAuxiliar,
+    grade,
+    section,
+    date,
+  } = {}) => {
+    
+    // Fecha a consultar
+    const targetDate = date
+      ? new Date(`${date}T00:00:00`)
+      : new Date();
+    targetDate.setHours(0, 0, 0, 0);
+    const nextDay = new Date(targetDate);
+    nextDay.setDate(nextDay.getDate() + 1);
 
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    // Total de estudiantes activos
-    const totalStudents = await prisma.student.count({
-      where: {
+    // Mismo universo de estudiantes que /attendance
+    const classroomFilter = buildClassroomFilter({
+      idAuxiliar,
+      grade,
+      section,
+    });
+    const whereStudents = {
+      classroom: classroomFilter,
+      student: {
         status: "ACTIVO",
       },
-    });
+    };
 
-    // Asistencias de hoy
-    const attendances = await prisma.attendance.findMany({
-      where: {
-        date: {
-          gte: today,
-          lt: tomorrow,
+    const classroomStudents =
+      await prisma.classroomStudent.findMany({
+        where: whereStudents,
+        select: {
+          student: {
+            select: {
+              idStudent: true,
+            },
+          },
         },
-      },
-      select: {
-        status: true,
-      },
-    });
+      });
+
+    const studentIds = classroomStudents.map(
+      (cs) => cs.student.idStudent
+    );
+
+    // Si no hay estudiantes
+    if (studentIds.length === 0) {
+      return {
+        present: 0,
+        late: 0,
+        justified: 0,
+        absent: 0,
+        total: 0,
+      };
+    }
+
+    const attendances =
+      await prisma.attendance.findMany({
+        where: {
+          idStudent: {
+            in: studentIds,
+          },
+          date: {
+            gte: targetDate,
+            lt: nextDay,
+          },
+        },
+        select: {
+          idAttendance: true,
+          idStudent: true,
+          status: true,
+          date: true,
+        },
+        orderBy: {
+          date: "desc",
+        },
+      });
+
+    const attendanceMap = new Map();
+    for (const attendance of attendances) {
+      if (!attendanceMap.has(attendance.idStudent)) {
+        attendanceMap.set(
+          attendance.idStudent,
+          attendance
+        );
+      }
+    }
 
     const summary = {
       present: 0,
       late: 0,
       justified: 0,
       absent: 0,
+      total: studentIds.length,
     };
 
-    // Contar asistencias
-    for (const att of attendances) {
-      switch (att.status) {
+    for (const idStudent of studentIds) {
+      const attendance =
+        attendanceMap.get(idStudent);
+      if (!attendance) {
+        summary.absent++;
+        continue;
+      }
+
+      switch (attendance.status) {
         case "PRESENTE":
           summary.present++;
           break;
-
         case "TARDANZA":
           summary.late++;
           break;
-
         case "JUSTIFICADA":
           summary.justified++;
           break;
+        case "FALTA":
+          summary.absent++;
+          break;
+        default:
+          summary.absent++;
+          break;
       }
     }
-
-    // Calcular faltas
-    summary.absent =
-      totalStudents - summary.present - summary.late - summary.justified;
 
     return summary;
   },
