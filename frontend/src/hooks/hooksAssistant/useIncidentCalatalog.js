@@ -3,124 +3,117 @@ import { apiFetch } from "../../helpers/apiFetch";
 
 function useIncidentCatalog({
   page = 1,
-  limit = 50,
+  limit = 10,
   search,
-  type,
+  sortBy,
+  sortOrder,
+  forSelect = false, // true: trae todo el catálogo (sin paginación) para poblar el <select>
 } = {}) {
-  const [catalog, setCatalog] = useState([]);
+  const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ── Lista del catálogo ─────────────────────────────────────────────────────
+  // ── Listado (admin: tabla paginada, o front: catálogo completo para el select) ──
   const fetchCatalog = useCallback(async () => {
-    setError(null);
-
     const params = new URLSearchParams();
-    params.set("page", page);
-    params.set("limit", limit);
-    if (search) params.set("search", search);
-    if (type)   params.set("type", type);
+    if (forSelect) {
+      params.set("limit", 100);
+      params.set("page", 1);
+    } else {
+      params.set("limit", limit);
+      params.set("page", page);
+      if (search) params.set("search", search);
+      if (sortBy) params.set("sortBy", sortBy);
+      if (sortOrder) params.set("sortOrder", sortOrder);
+    }
 
-    const { ok, data } = await apiFetch(
-      `/incident-catalog?${params.toString()}`,
-      "GET"
-    );
+    const { ok, data } = await apiFetch(`/incident-catalog?${params.toString()}`, "GET");
 
     if (!ok || !data?.success) {
-      setCatalog([]);
-      setError(data?.message || "Error al obtener catálogo");
+      setError("Error al obtener el catálogo de incidentes");
+      setRows([]);
+      setTotal(0);
       return;
     }
 
-    setCatalog(data.data ?? []);
-    setTotal(data.pagination?.total ?? 0);
-  }, [page, limit, search, type]);
+    setRows(data.data ?? []);
+    setTotal(data.pagination?.total ?? data.data?.length ?? 0);
+  }, [page, limit, search, sortBy, sortOrder, forSelect]);
+
+  const refreshData = useCallback(async () => {
+    await fetchCatalog();
+  }, [fetchCatalog]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await fetchCatalog();
+      setError(null);
+      await refreshData();
       setLoading(false);
     };
     load();
-  }, [fetchCatalog]);
+  }, [refreshData]);
 
-  // ── Crear item del catálogo (solo ADMIN) ───────────────────────────────────
-  const createCatalogItem = useCallback(async ({
-    name,
-    description,
-    type,
-    pointsDeducted,
-  }) => {
+  // ── Crear tipo de incidente (ADMIN) ─────────────────────────────────────
+  const createIncidentCatalog = useCallback(async ({ name, description, type, points }) => {
     const { ok, data } = await apiFetch("/incident-catalog", "POST", {
       name,
       description,
       type,
-      pointsDeducted,
+      points,
     });
 
     if (!data) throw new Error("No se pudo conectar con el servidor");
-    if (!ok || !data.success) throw new Error(data.message || "Error al crear catálogo");
+    if (!ok || !data.success) throw new Error(data.message || "Error al crear el tipo de incidente");
 
-    await fetchCatalog();
+    await refreshData();
     return data.incidentCatalog;
-  }, [fetchCatalog]);
+  }, [refreshData]);
 
-  // ── Actualizar item del catálogo (solo ADMIN) ─────────────────────────────
-  const updateCatalogItem = useCallback(async (idIncidentCatalog, updateData) => {
-    const { ok, data } = await apiFetch(
-      `/incident-catalog/${idIncidentCatalog}`,
-      "PATCH",
-      updateData
-    );
+  // ── Actualizar tipo de incidente (ADMIN) ───────────────────────────────
+  const updateIncidentCatalog = useCallback(async (idIncidentCatalog, changes) => {
+    const body = {};
+    for (const key of ["name", "description", "type", "points"]) {
+      if (changes[key] !== undefined) body[key] = changes[key];
+    }
+
+    const { ok, data } = await apiFetch(`/incident-catalog/${idIncidentCatalog}`, "PATCH", body);
 
     if (!data) throw new Error("No se pudo conectar con el servidor");
-    if (!ok || !data.success) throw new Error(data.message || "Error al actualizar catálogo");
+    if (!ok || !data.success) throw new Error(data.message || "Error al actualizar el tipo de incidente");
 
-    await fetchCatalog();
+    await refreshData();
     return data.incidentCatalog;
-  }, [fetchCatalog]);
+  }, [refreshData]);
 
-  // ── Eliminar item del catálogo (solo ADMIN) ───────────────────────────────
-  const deleteCatalogItem = useCallback(async (idIncidentCatalog) => {
-    const { ok, data } = await apiFetch(
-      `/incident-catalog/${idIncidentCatalog}`,
-      "DELETE"
-    );
+  // ── Eliminar tipo de incidente (ADMIN) ─────────────────────────────────
+  const deleteIncidentCatalog = useCallback(async (idIncidentCatalog) => {
+    const { ok, data } = await apiFetch(`/incident-catalog/${idIncidentCatalog}`, "DELETE");
 
     if (!data) throw new Error("No se pudo conectar con el servidor");
-    if (!ok || !data.success) throw new Error(data.message || "Error al eliminar catálogo");
+    if (!ok || !data.success) throw new Error(data.message || "Error al eliminar el tipo de incidente");
 
-    await fetchCatalog();
+    await refreshData();
     return data.incidentCatalog;
-  }, [fetchCatalog]);
+  }, [refreshData]);
 
-  // Labels por tipo para usar en badges/filtros
-  const TYPE_LABELS = {
-    LEVE:      { label: "Leve",       className: "bg-yellow-100 text-yellow-700" },
-    GRAVE:     { label: "Grave",      className: "bg-orange-100 text-orange-700" },
-    MUY_GRAVE: { label: "Muy grave",  className: "bg-red-100 text-red-700" },
+  // ── Catálogo agrupado por tipo, listo para <optgroup> en el select ──────
+  const grouped = {
+    POSITIVO: rows.filter((r) => r.type === "POSITIVO"),
+    NEGATIVO: rows.filter((r) => r.type === "NEGATIVO"),
   };
 
-  // Opciones formateadas para selects
-  const catalogOptions = catalog.map((item) => ({
-    value: String(item.idIncidentCatalog),
-    text:  `${item.name} (${TYPE_LABELS[item.type]?.label ?? item.type}) — ${item.pointsDeducted} pts`,
-    ...item,
-  }));
-
   return {
-    catalog,
-    catalogOptions, // listo para usar en <select> o FormItem
+    rows,
+    grouped,
     total,
     loading,
     error,
-    TYPE_LABELS,
-    refetch: fetchCatalog,
-    createCatalogItem,
-    updateCatalogItem,
-    deleteCatalogItem,
+    refetch: refreshData,
+    createIncidentCatalog,
+    updateIncidentCatalog,
+    deleteIncidentCatalog,
   };
 }
 

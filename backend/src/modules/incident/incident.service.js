@@ -21,53 +21,65 @@ const incidentService = {
     const period = await academicPeriodService.getCurrent();
     const delta = catalog.type === "POSITIVO" ? catalog.points : -catalog.points;
 
-    const queryResult = await prisma.$transaction(async (prisma) => {
-      let behavior = await prisma.behavior.findUnique({
-        where: { idStudent_idPeriod: { idStudent, idPeriod: period.idPeriod } },
-      });
-      const previousScore = behavior?.score ?? 0;
+    try {
+      const queryResult = await prisma.$transaction(async (prisma) => {
+        let behavior = await prisma.behavior.findUnique({
+          where: { idStudent_idPeriod: { idStudent, idPeriod: period.idPeriod } },
+        });
+        const previousScore = behavior?.score ?? 0;
 
-      if (delta > 0 && previousScore >= 20) {
-        throw new AppError("El estudiante ya tiene la nota máxima (20).", 400, [
-          { field: "idStudent", message: "El estudiante ya tiene la nota máxima (20)." },
+        if (delta > 0 && previousScore >= 20) {
+          throw new AppError("El estudiante ya tiene la nota máxima (20).", 400, [
+            { field: "idStudent", message: "El estudiante ya tiene la nota máxima (20)." },
+          ]);
+        }
+
+        const newScore = Math.min(20, Math.max(0, previousScore + delta));
+
+        behavior = behavior
+          ? await prisma.behavior.update({ where: { idBehavior: behavior.idBehavior }, data: { score: newScore } })
+          : await prisma.behavior.create({ data: { idStudent, idPeriod: period.idPeriod, score: newScore } });
+
+        const incident = await prisma.incident.create({
+          data: { idStudent, idAuxiliar, idIncidentCatalog, date, note },
+          select: incidentFields.create,
+        });
+
+        await prisma.behaviorHistory.create({
+          data: {
+            idBehavior: behavior.idBehavior,
+            previousScore,
+            newScore,
+            description: note ?? catalog.name,
+            idAuxiliar,
+            type: "INCIDENTE",
+            idIncident: incident.idIncident,
+          },
+        });
+
+        return { incident, behavior };
+      });
+
+      return {
+        ...queryResult.incident,
+        behaviorScore: queryResult.behavior.score,
+        scale: behaviorUtils.getScale(queryResult.behavior.score),
+        period,
+      };
+    } catch (error) {
+      if (error.code === "P2002") {
+        throw new AppError("Incidente duplicado", 400, [
+          {
+            field: "idIncidentCatalog",
+            message: `Ya se registró "${catalog.name}" para este estudiante en la fecha indicada.`,
+          },
         ]);
       }
-
-      const newScore = Math.min(20, Math.max(0, previousScore + delta));
-
-      behavior = behavior
-        ? await prisma.behavior.update({ where: { idBehavior: behavior.idBehavior }, data: { score: newScore } })
-        : await prisma.behavior.create({ data: { idStudent, idPeriod: period.idPeriod, score: newScore } });
-
-      const incident = await prisma.incident.create({
-        data: { idStudent, idAuxiliar, idIncidentCatalog, date, note },
-        select: incidentFields.create,
-      });
-
-      await prisma.behaviorHistory.create({
-        data: {
-          idBehavior: behavior.idBehavior,
-          previousScore,
-          newScore,
-          description: note ?? catalog.name,
-          idAuxiliar,
-          type: "INCIDENTE",
-          idIncident: incident.idIncident,
-        },
-      });
-
-      return { incident, behavior };
-    });
-
-    return {
-      ...queryResult.incident,
-      behaviorScore: queryResult.behavior.score,
-      scale: behaviorUtils.getScale(queryResult.behavior.score),
-      period,
-    };
+      throw error;
+    }
   },
 
-  get: async ({ page, limit, sortOrder, sortBy, search, incidentCatalog }) => {
+  get: async ({ page, limit, sortOrder, sortBy, search, incidentCatalog, startDate, endDate }) => {
     const where = searchUtils.buildSearchWhere({
       search,
       numberFields: ["idIncident"],
@@ -81,6 +93,14 @@ const incidentService = {
         incidentCatalog,
       },
     });
+
+    if (startDate || endDate) {
+    where.date = {};
+    if (startDate) where.date.gte = startDate;
+    if (endDate) where.date.lte = endDate;
+  }
+
+
     const [incidents, total] = await prisma.$transaction([
       prisma.incident.findMany({
         where,

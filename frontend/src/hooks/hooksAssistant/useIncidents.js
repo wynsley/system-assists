@@ -1,115 +1,127 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "../../helpers/apiFetch";
 
-function useIncidents({
+function useIncident({
   page = 1,
-  limit = 10,
+  limit = 30,
   search,
   sortBy,
   sortOrder,
-  autoFetch = true,
+  incidentCatalog, // filtro por idIncidentCatalog puntual, si se necesita
+  startDate,       // "YYYY-MM-DD"
+  endDate,         // "YYYY-MM-DD"
 } = {}) {
-  const [incidents, setIncidents] = useState([]);
+  const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // ── Lista de incidentes ────────────────────────────────────────────────────
+  // ── Historial de incidentes (con filtro de fecha) ────────────────────────
   const fetchIncidents = useCallback(async () => {
-    if (!autoFetch) return;
-
-    setError(null);
-
     const params = new URLSearchParams();
-    params.set("page", page);
     params.set("limit", limit);
-    params.set("sortOrder", sortOrder ?? "desc");
-    if (search)  params.set("search", search);
-    if (sortBy)  params.set("sortBy", sortBy);
+    params.set("page", page);
+    if (search) params.set("search", search);
+    if (sortBy) params.set("sortBy", sortBy);
+    if (sortOrder) params.set("sortOrder", sortOrder);
+    if (incidentCatalog) params.set("incidentCatalog", incidentCatalog);
+    if (startDate) params.set("startDate", startDate);
+    if (endDate) params.set("endDate", endDate);
 
-    const { ok, data } = await apiFetch(
-      `/incident?${params.toString()}`,
-      "GET"
-    );
+    const { ok, data } = await apiFetch(`/incident?${params.toString()}`, "GET");
 
     if (!ok || !data?.success) {
-      setIncidents([]);
+      setError("Error al obtener el historial de incidentes");
+      setRows([]);
       setTotal(0);
-      setError(data?.message || "Error al obtener incidentes");
       return;
     }
 
-    setIncidents(data.data ?? []);
-    setTotal(data.pagination?.total ?? 0);
-  }, [page, limit, search, sortBy, sortOrder, autoFetch]);
+    setRows(data.data ?? []);
+    setTotal(data.pagination?.total ?? data.data?.length ?? 0);
+  }, [page, limit, search, sortBy, sortOrder, incidentCatalog, startDate, endDate]);
+
+  const refreshData = useCallback(async () => {
+    await fetchIncidents();
+  }, [fetchIncidents]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      await fetchIncidents();
+      setError(null);
+      await refreshData();
       setLoading(false);
     };
     load();
-  }, [fetchIncidents]);
+  }, [refreshData]);
 
-  // ── Crear incidente (POST /incident) ──────────────────────────────────────
-  const createIncident = useCallback(async ({
-    idStudent,
-    idIncidentCatalog,
-    idAuxiliar,
-    note = "",
-  }) => {
-    const { ok, data } = await apiFetch("/incident", "POST", {
-      idStudent,
-      idIncidentCatalog,
-      idAuxiliar,
-      note,
-      date: new Date().toISOString(),
-    });
+  // ── Registrar incidente (modal: idStudent + idIncidentCatalog, puntos van del catálogo) ──
+  const createIncident = useCallback(async ({ idStudent, idIncidentCatalog, date, note = "" }) => {
+    const body = { idStudent, idIncidentCatalog, date };
+    if (note?.trim()) body.note = note.trim();
+
+    const { ok, data } = await apiFetch("/incident", "POST", body);
 
     if (!data) throw new Error("No se pudo conectar con el servidor");
-    if (!ok || !data.success) throw new Error(data.message || "Error al registrar incidente");
+    if (!ok || !data.success) {
+      // El backend distingue "incidente duplicado" (mismo tipo, mismo día) de otros errores;
+      // el mensaje ya viene listo para mostrar tal cual en el modal.
+      throw new Error(data.message || "Error al registrar el incidente");
+    }
 
-    await fetchIncidents();
+    await refreshData();
     return data.incident;
-  }, [fetchIncidents]);
+  }, [refreshData]);
 
-  // ── Actualizar incidente (PATCH /incident/:id) ────────────────────────────
-  const updateIncident = useCallback(async (idIncident, updateData) => {
-    const { ok, data } = await apiFetch(
-      `/incident/${idIncident}`,
-      "PATCH",
-      updateData
-    );
+  // ── Editar incidente (ej. corregir nota o fecha) ─────────────────────────
+  const updateIncident = useCallback(async (idIncident, { date, note, idIncidentCatalog }) => {
+    const body = {};
+    if (date !== undefined) body.date = date;
+    if (note !== undefined) body.note = note;
+    if (idIncidentCatalog !== undefined) body.idIncidentCatalog = idIncidentCatalog;
+
+    const { ok, data } = await apiFetch(`/incident/${idIncident}`, "PATCH", body);
 
     if (!data) throw new Error("No se pudo conectar con el servidor");
-    if (!ok || !data.success) throw new Error(data.message || "Error al actualizar incidente");
+    if (!ok || !data.success) throw new Error(data.message || "Error al actualizar el incidente");
 
-    await fetchIncidents();
+    await refreshData();
     return data.incident;
-  }, [fetchIncidents]);
+  }, [refreshData]);
 
-  // ── Eliminar incidente (DELETE /incident/:id) ─────────────────────────────
+  // ── Eliminar incidente ────────────────────────────────────────────────
   const deleteIncident = useCallback(async (idIncident) => {
     const { ok, data } = await apiFetch(`/incident/${idIncident}`, "DELETE");
 
     if (!data) throw new Error("No se pudo conectar con el servidor");
-    if (!ok || !data.success) throw new Error(data.message || "Error al eliminar incidente");
+    if (!ok || !data.success) throw new Error(data.message || "Error al eliminar el incidente");
 
-    await fetchIncidents();
+    await refreshData();
     return data.incident;
-  }, [fetchIncidents]);
+  }, [refreshData]);
+
+  // ── Historial de un estudiante puntual (ej. perfil del estudiante) ───────
+  const getIncidentsByStudent = useCallback(async (idStudent) => {
+    const { ok, data } = await apiFetch(`/incident/student/${idStudent}`, "GET");
+
+    if (!ok || !data?.success) {
+      throw new Error(data?.message || "No se encontraron incidentes para este estudiante");
+    }
+
+    return data.data ?? data.incidents ?? [];
+  }, []);
 
   return {
-    incidents,
+    rows,
     total,
     loading,
     error,
-    refetch: fetchIncidents,
+    refetch: refreshData,
     createIncident,
     updateIncident,
     deleteIncident,
+    getIncidentsByStudent,
   };
 }
 
-export { useIncidents };
+export { useIncident };

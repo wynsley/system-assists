@@ -57,7 +57,7 @@ const behaviorSchema = {
       max: 6, 
       required: false 
     }),
-    idPerior: idField({
+    idPeriod: idField({
       label: "El ID del bimestre",
       required: false
     }),

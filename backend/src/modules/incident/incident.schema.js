@@ -92,6 +92,14 @@ const incidentSchema = {
       sortFields: incidentFields.sort,
       defaultValue: "idIncident",
     }),
+    startDate: dateField({
+      label: "La fecha de inicio",
+      required: false,
+    }),
+    endDate: dateField({
+      label: "La fecha de fin",
+      required: false,
+    }),
     sortOrder: sortOrderField(),
     search: searchField(),
   }),
