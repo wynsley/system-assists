@@ -8,8 +8,6 @@ import { parentService } from "../parent/parent.service.js";
 import { studentService } from "../student/student.service.js";
 import { userService } from "../user/user.service.js";
 import { attendanceFields } from "./attendance.fields.js";
-import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js";
-import { behaviorUtils } from "../../utils/behavior.utils.js";
 
 const attendanceService = {
   create: async ({ status, note, idStudent }, idAuxiliar) => {
@@ -526,60 +524,8 @@ const attendanceService = {
     });
   },
 
-  // Migrado: ahora lee Behavior.score del bimestre activo,
-  // en vez de recalcular restando incidentes desde 20.
-  getBehaviorSummaryToday: async () => {
-    let period;
-    try {
-      period = await academicPeriodService.getCurrent();
-    } catch {
-      // Sin bimestre activo configurado: no rompemos el dashboard,
-      // devolvemos todo en 0.
-      return { AD: 0, A: 0, B: 0, C: 0 };
-    }
-
-    const students = await prisma.student.findMany({
-      where: { status: "ACTIVO" },
-      select: {
-        idStudent: true,
-        behaviors: {
-          where: { idPeriod: period.idPeriod },
-          select: { score: true },
-        },
-      },
-    });
-
-    let AD = 0;
-    let A = 0;
-    let B = 0;
-    let C = 0;
-
-    for (const student of students) {
-      const score = student.behaviors[0]?.score ?? 0;
-      const scale = behaviorUtils.getScale(score);
-
-      if (scale === "AD") AD++;
-      else if (scale === "A") A++;
-      else if (scale === "B") B++;
-      else C++;
-    }
-
-    const totalStudents = AD + A + B + C;
-
-    if (totalStudents === 0) {
-      return { AD: 0, A: 0, B: 0, C: 0 };
-    }
-
-    AD = Math.round((AD / totalStudents) * 100);
-    A = Math.round((A / totalStudents) * 100);
-    B = Math.round((B / totalStudents) * 100);
-    C = Math.round((C / totalStudents) * 100);
-
-    return { AD, A, B, C };
-  },
-
-  //Migrado: la conducta ya no se recalcula sumando incidentes del año,
-  // ahora lee directo Behavior.score del bimestre activo.
+  // Resumen de asistencia por padre. La conducta/comportamiento ya NO vive
+  // aquí: se movió por completo al módulo `behavior`.
   getAttendanceSummaryByParent: async ({ idParent }) => {
     const parent = await userService.getById(idParent);
     const today = new Date();
@@ -625,23 +571,6 @@ const attendanceService = {
       delays.map((d) => [d.idStudent, d._count.idAttendance]),
     );
 
-    // Nota de conducta del bimestre activo (en vez de sumar incidentes del año)
-    let period ;
-    try {
-      period = await academicPeriodService.getCurrent();
-    } catch {
-      period = null;
-    }
-
-    const behaviors = period
-      ? await prisma.behavior.findMany({
-          where: { idStudent: { in: studentIds }, idPeriod: period.idPeriod },
-          select: { idStudent: true, score: true },
-        })
-      : [];
-
-    const behaviorMap = new Map(behaviors.map((b) => [b.idStudent, b.score]));
-
     const weekSummaries = await Promise.all(
       studentIds.map((idStudent) =>
         attendanceService.getByWeekSummary({ idStudent }),
@@ -654,9 +583,6 @@ const attendanceService = {
 
     const studentsSummary = await Promise.all(
       students.map(async ({ student }) => {
-        const score = behaviorMap.get(student.idStudent) ?? 0;
-        const conductGrade = behaviorUtils.getScale(score);
-
         const { attendanceLate, total } = {
           attendanceLate: await prisma.attendance.count({
             where: {
@@ -709,8 +635,6 @@ const attendanceService = {
           status: student.status,
           attendanceToday: attendanceMap.get(student.idStudent) ?? "FALTA",
           totalDelaysYear: delayMap.get(student.idStudent) ?? 0,
-          conductPointsYear: score,
-          conductYear: conductGrade,
           averageAttendanceWeek,
           daysPresent: {
             total: total,

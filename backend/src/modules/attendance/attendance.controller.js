@@ -197,17 +197,7 @@ const attendanceController = {
     }
   },
 
-  // Dashboard Auxiliar: comportamiento AD/A/B/C
-  getBehaviorSummary: async (req, res, next) => {
-    try {
-      const summary = await attendanceService.getBehaviorSummaryToday();
-      return res.json({ success: true, data: summary });
-    } catch (error) {
-      next(error);
-    }
-  },
-
-  // Dashboard Padre: resumen completo de sus hijos
+  // Dashboard Padre: resumen completo de sus hijos (solo asistencia)
   getSummaryByParent: async (req, res, next) => {
     try {
       const idParent = req.user.sub;

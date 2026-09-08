@@ -8,7 +8,7 @@ import { academicPeriodService } from "../academicPeriod/academicPeriod.service.
 const NO_PERIOD_MESSAGE = "Aún no hay un bimestre activo configurado.";
 
 const behaviorService = {
-  
+
   getRoster: async ({ page, limit, sortOrder, sortBy, search, grade, section, idAuxiliar, idPeriod }) => {
     let period = null;
     let message = null;
@@ -59,9 +59,9 @@ const behaviorService = {
     // Sin periodo activo: no hay nada que buscar en Behavior, todos quedan en 0
     const behaviors = period && idStudents.length
       ? await prisma.behavior.findMany({
-          where: { idStudent: { in: idStudents }, idPeriod: period.idPeriod },
-          select: { idBehavior: true, idStudent: true, score: true },
-        })
+        where: { idStudent: { in: idStudents }, idPeriod: period.idPeriod },
+        select: { idBehavior: true, idStudent: true, score: true },
+      })
       : [];
 
     const behaviorMap = new Map(behaviors.map((b) => [b.idStudent, b]));
@@ -79,6 +79,57 @@ const behaviorService = {
     });
 
     return { students, total, period, message };
+  },
+
+  getSummary: async ({ idAuxiliar } = {}) => {
+    let period;
+    try {
+      period = await academicPeriodService.getCurrent();
+    } catch {
+      return { AD: 0, A: 0, B: 0, C: 0 };
+    }
+
+    const studentWhere = {
+      status: "ACTIVO",
+      ...(idAuxiliar
+        ? {
+          classroomStudents: {
+            some: { classroom: { status: "ACTIVO", classroomAuxiliars: { some: { idAuxiliar } } } },
+          },
+        }
+        : {}),
+    };
+
+    const students = await prisma.student.findMany({
+      where: studentWhere,
+      select: {
+        idStudent: true,
+        behaviors: {
+          where: { idPeriod: period.idPeriod },
+          select: { score: true },
+        },
+      },
+    });
+
+    let AD = 0, A = 0, B = 0, C = 0;
+    for (const student of students) {
+      const score = student.behaviors[0]?.score ?? 0;
+      const scale = behaviorUtils.getScale(score);
+      if (scale === "AD") AD++;
+      else if (scale === "A") A++;
+      else if (scale === "B") B++;
+      else C++;
+    }
+
+    const totalStudents = AD + A + B + C;
+    if (totalStudents === 0) return { AD: 0, A: 0, B: 0, C: 0 };
+
+    return {
+      AD: Math.round((AD / totalStudents) * 100),
+      A: Math.round((A / totalStudents) * 100),
+      B: Math.round((B / totalStudents) * 100),
+      C: Math.round((C / totalStudents) * 100),
+    };
   },
 
   calificar: async ({ idStudent, score, description, idAuxiliar }) => {
@@ -113,14 +164,14 @@ const behaviorService = {
 
   getConsolidado: async ({ grade, section, search, idAuxiliar, idPeriod }) => {
     const { students, period, message } = await behaviorService.getRoster({
-      page: 1, 
-      limit: 1000, 
-      sortBy: "lastname", 
+      page: 1,
+      limit: 1000,
+      sortBy: "lastname",
       sortOrder: "asc",
-      search, 
-      grade, 
-      section, 
-      idAuxiliar, 
+      search,
+      grade,
+      section,
+      idAuxiliar,
       idPeriod,
     });
     return { students, period, message };

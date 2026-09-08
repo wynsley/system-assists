@@ -35,6 +35,16 @@ const behaviorController = {
     }
   },
 
+  getSummary: async (req, res, next) => {
+    try {
+      const user = req.user;
+      const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
+      const data = await behaviorService.getSummary({ idAuxiliar });
+      return res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  },
   calificar: async (req, res, next) => {
     try {
       const validate = await validateUtils.validateSchema({
@@ -66,16 +76,16 @@ const behaviorController = {
       const user = req.user;
       const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
 
-      const {students, period, message } = await behaviorService.getConsolidado({ 
-        ...validate, 
-        idAuxiliar 
+      const { students, period, message } = await behaviorService.getConsolidado({
+        ...validate,
+        idAuxiliar
       });
 
-      return res.json({ 
-        success: true, 
-        data: students, 
-        period, 
-        message 
+      return res.json({
+        success: true,
+        data: students,
+        period,
+        message
       });
     } catch (error) {
       next(error);

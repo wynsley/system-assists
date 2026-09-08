@@ -42,13 +42,6 @@ attendanceRoutes.get(
 );
 
 attendanceRoutes.get(
-  "/summary/behavior",
-  authMiddleware,
-  authMiddlewareRole(["ADMIN", "AUXILIAR"]),
-  attendanceController.getBehaviorSummary,
-);
-
-attendanceRoutes.get(
   "/summary/parent",
   authMiddleware,
   authMiddlewareRole(["PARENT"]),
