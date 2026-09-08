@@ -26,13 +26,16 @@ function BehaviorControlPage () {
       <CardsScales
         behaviorStatics = {behaviorStatics}
       />
-      <BehaviorListStudents
+      {/*
+        <BehaviorListStudents
         students={students}
         updateBehavior={updateBehavior}
       />
       <BehaviorRecords
         updateBehavior={updateBehavior}
       />
+      */}
+      
     </MyTemplate>
   )
 }
