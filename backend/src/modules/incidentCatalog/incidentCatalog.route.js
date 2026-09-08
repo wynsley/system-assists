@@ -28,7 +28,7 @@ incidentCatalogRoutes.get(
 incidentCatalogRoutes.patch(
   "/:id",
   authMiddleware,
-  authMiddlewareRole(["ADMIN"]),
+  authMiddlewareRole(["ADMIN", "AUXILIAR" ]),
   incidentCatalogController.update,
 );
 incidentCatalogRoutes.delete(

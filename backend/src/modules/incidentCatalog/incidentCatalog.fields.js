@@ -14,7 +14,7 @@ const incidentCatalogFields = {
     type: true,
     points: true,
   },
-  sort: ["name", "type", "pointsDeducted"],
+  sort: ["name", "type", "points"],
   search: [
     "idIncidentCatalog",
     "name",

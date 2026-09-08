@@ -25,7 +25,10 @@ const numericField = ({ label, min, max, defaultValue, required }) => {
   const transformed = schema.transform((val) => Number(val));
 
   return z.preprocess((val) => {
-    if (val === undefined || val === "") return String(defaultValue);
+    if (val === undefined || val === "") {
+      if (defaultValue === undefined) return undefined;
+      return String(defaultValue);
+    }
     return String(val);
   }, required ? transformed : transformed.optional());
 };

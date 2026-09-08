@@ -17,6 +17,7 @@ import { incidentCatalogRoutes } from "./modules/incidentCatalog/incidentCatalog
 import { incidentRoutes } from "./modules/incident/incident.route.js";
 import { classroomAuxiliarRoutes } from "./modules/classroomAuxiliar/classroomAuxiliar.routes.js";
 import { behaviorRoutes } from "./modules/behavior/behavior.routes.js";
+import { academicPeriodRoutes } from "./modules/academicPeriod/academicPeriod.routes.js";
 
 const app = express();
 
@@ -46,7 +47,8 @@ app.use("/attendance", attendanceRoutes);
 app.use("/incident-catalog", incidentCatalogRoutes);
 app.use("/incident", incidentRoutes);
 app.use("/classroom-auxiliar", classroomAuxiliarRoutes);
-app.use("/behavior", behaviorRoutes)
+app.use("/behavior", behaviorRoutes);
+app.use("/academic-period", academicPeriodRoutes);
 
 app.use(errorsMiddleware);
 

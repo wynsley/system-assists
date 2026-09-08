@@ -1,17 +1,24 @@
 import { prisma } from "../../config/prisma.js";
 import { AppError } from "../../utils/AppError.js";
 import { searchUtils } from "../../utils/search.utils.js";
+import { validateUtils } from "../../utils/validate.utils.js";
 import { incidentCatalogFields } from "./incidentCatalog.fields.js";
 
 const incidentCatalogService = {
   create: async (data) => {
+    if(!Number.isInteger(data.points) || data.points <= 0) {
+      throw new AppError("Puntos inválidos", 400, [
+        {field : "points",
+          message: "Los puntos deben ser un entero positivo"
+        }
+      ])
+    }
     const queryResult = await prisma.$transaction(async (prisma) => {
       const incidentCatalog = await prisma.incidentCatalog.create({
         data,
         select: incidentCatalogFields.create,
       });
 
-      console.log(incidentCatalog);
       return { incidentCatalog };
     });
     return queryResult.incidentCatalog;
@@ -36,7 +43,7 @@ const incidentCatalogService = {
         select: incidentCatalogFields.select,
         skip: (page - 1) * limit,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: validateUtils.buildOrderBy({ sortBy, sortOrder }),
       }),
       prisma.incidentCatalog.count({ where }),
     ]);

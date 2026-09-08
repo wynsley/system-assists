@@ -33,7 +33,7 @@ const incidentCatalogSchema = {
       points: numericField({
         label: "Los puntos a deducir",
         min: 1,
-        max: 100,
+        max: 20,
         required: true,
       }),
     })
@@ -61,7 +61,7 @@ const incidentCatalogSchema = {
       }),
       points: numericField({
         label: "Los puntos a deducir",
-        min: 0,
+        min: 1,
         max: 20,
         required: false,
       }),
