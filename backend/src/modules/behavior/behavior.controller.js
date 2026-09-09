@@ -37,15 +37,25 @@ const behaviorController = {
 
   getSummary: async (req, res, next) => {
     try {
+      const validate = await validateUtils.validateSchema({
+        schema: behaviorSchema.params,
+        data: req.query,
+      });
       const user = req.user;
       const idAuxiliar = user?.role === "AUXILIAR" ? user.sub : undefined;
-      const data = await behaviorService.getSummary({ idAuxiliar });
+
+      const data = await behaviorService.getSummary({
+        idAuxiliar,
+        grade: validate.grade,
+        section: validate.section,
+        idPeriod: validate.idPeriod,
+      });
       return res.json({ success: true, data });
     } catch (error) {
       next(error);
     }
   },
-  
+
   calificar: async (req, res, next) => {
     try {
       const validate = await validateUtils.validateSchema({

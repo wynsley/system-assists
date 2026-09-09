@@ -81,39 +81,44 @@ const behaviorService = {
     return { students, total, period, message };
   },
 
-  getSummary: async ({ idAuxiliar } = {}) => {
+  getSummary: async ({ idAuxiliar, grade, section, idPeriod } = {}) => {
     let period;
-    try {
-      period = await academicPeriodService.getCurrent();
-    } catch {
-      return { AD: 0, A: 0, B: 0, C: 0 };
+    if (idPeriod) {
+      period = await academicPeriodService.getById({ idPeriod });
+    } else {
+      try {
+        period = await academicPeriodService.getCurrent();
+      } catch {
+        return { AD: 0, A: 0, B: 0, C: 0 };
+      }
     }
 
-    const studentWhere = {
-      status: "ACTIVO",
-      ...(idAuxiliar
-        ? {
-          classroomStudents: {
-            some: { classroom: { status: "ACTIVO", classroomAuxiliars: { some: { idAuxiliar } } } },
-          },
-        }
-        : {}),
-    };
+    const classroomFilter = { status: "ACTIVO" };
+    if (idAuxiliar) classroomFilter.classroomAuxiliars = { some: { idAuxiliar } };
+    if (grade || section) {
+      classroomFilter.section = {
+        ...(grade ? { grade: { level: grade } } : {}),
+        ...(section ? { name: section } : {}),
+      };
+    }
 
-    const students = await prisma.student.findMany({
-      where: studentWhere,
-      select: {
-        idStudent: true,
-        behaviors: {
-          where: { idPeriod: period.idPeriod },
-          select: { score: true },
-        },
-      },
+    const classroomStudents = await prisma.classroomStudent.findMany({
+      where: { classroom: classroomFilter, student: { status: "ACTIVO" } },
+      select: { student: { select: { idStudent: true } } },
     });
+    const idStudents = classroomStudents.map((cs) => cs.student.idStudent);
+
+    const behaviors = idStudents.length
+      ? await prisma.behavior.findMany({
+        where: { idStudent: { in: idStudents }, idPeriod: period.idPeriod },
+        select: { idStudent: true, score: true },
+      })
+      : [];
+    const behaviorMap = new Map(behaviors.map((b) => [b.idStudent, b.score]));
 
     let AD = 0, A = 0, B = 0, C = 0;
-    for (const student of students) {
-      const score = student.behaviors[0]?.score ?? 0;
+    for (const idStudent of idStudents) {
+      const score = behaviorMap.get(idStudent) ?? 0;
       const scale = behaviorUtils.getScale(score);
       if (scale === "AD") AD++;
       else if (scale === "A") A++;

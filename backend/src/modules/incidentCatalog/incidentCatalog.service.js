@@ -4,14 +4,14 @@ import { searchUtils } from "../../utils/search.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
 import { incidentCatalogFields } from "./incidentCatalog.fields.js";
 
+const ALLOWED_POINTS = [1, 3, 5];
+
 const incidentCatalogService = {
   create: async (data) => {
-    if(!Number.isInteger(data.points) || data.points <= 0) {
+    if (data.points !== undefined && !ALLOWED_POINTS.includes(data.points)) {
       throw new AppError("Puntos inválidos", 400, [
-        {field : "points",
-          message: "Los puntos deben ser un entero positivo"
-        }
-      ])
+        { field: "points", message: "Los puntos deben ser 1 (leve), 3 (moderado) o 5 (grave)" },
+      ]);
     }
     const queryResult = await prisma.$transaction(async (prisma) => {
       const incidentCatalog = await prisma.incidentCatalog.create({
@@ -70,6 +70,11 @@ const incidentCatalogService = {
   },
 
   update: async ({ idIncidentCatalog, data }) => {
+    if (data.points !== undefined && !ALLOWED_POINTS.includes(data.points)) {
+      throw new AppError("Puntos inválidos", 400, [
+        { field: "points", message: "Los puntos deben ser 1 (leve), 3 (moderado) o 5 (grave)" },
+      ]);
+    }
     const incidentCatalog = await prisma.incidentCatalog.findUnique({
       where: { idIncidentCatalog },
     });

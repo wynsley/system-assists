@@ -9,6 +9,9 @@ import { searchField } from "../../utils/schemas/searchField.js";
 import { nameField } from "../../utils/schemas/nameField.js";
 import { statusField } from "../../utils/schemas/statusField.js";
 
+
+const ALLOWED_POINTS = [1, 3, 5];
+
 const incidentCatalogSchema = {
   create: z
     .object({
@@ -33,9 +36,11 @@ const incidentCatalogSchema = {
       points: numericField({
         label: "Los puntos a deducir",
         min: 1,
-        max: 20,
+        max: 5,
         required: true,
-      }),
+      }).refine((val) => ALLOWED_POINTS.includes(val), {
+        message: "Los puntos deben ser 1 (leve), 3 (moderado) o 5 (grave)",
+      })
     })
     .strict({ message: "No se permiten campos adicionales" }),
 
@@ -62,9 +67,11 @@ const incidentCatalogSchema = {
       points: numericField({
         label: "Los puntos a deducir",
         min: 1,
-        max: 20,
-        required: false,
-      }),
+        max: 5,
+        required: true,
+      }).refine((val) => ALLOWED_POINTS.includes(val), {
+        message: "Los puntos deben ser 1 (leve), 3 (moderado) o 5 (grave)",
+      })
     })
     .strict({ message: "No se permiten campos adicionales" })
     .superRefine((data, ctx) => {
