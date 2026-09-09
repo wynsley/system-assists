@@ -1,6 +1,7 @@
 import { FiX } from "react-icons/fi";
 import { HiAcademicCap } from "react-icons/hi2";
 import { MdClass, MdMeetingRoom } from "react-icons/md";
+import { BsCalendarRange } from "react-icons/bs";
 //hoks
 import { useClickOutside } from "../../../hooks/hookModal/useClickOutside";
 import { useModalAnimation } from "../../../hooks/hookModal/useModalAnimation";
@@ -13,6 +14,7 @@ function ModalMangAcademic({
   openGrade,
   openSection,
   openClassroom,
+  openPeriod
 }) {
   const { isClosing, handleClose } = useModalAnimation(closeModal);
 
@@ -33,6 +35,11 @@ function ModalMangAcademic({
       icon: MdMeetingRoom,
       text: "Crear Aula",
       onClick: openClassroom,
+    },
+    {
+      icon: BsCalendarRange,
+      text: "Crear Periodo",
+      onClick: openPeriod,
     },
   ];
 

@@ -12,13 +12,15 @@ import { useModal } from "../../../hooks/hookModal/useModal";
 function HeaderAcademic({
   refetchGrades,
   refethcSections,
-  refetchClassroom
+  refetchClassroom,
+  refetchPeriods
 }) {
   //hooks modals
   const modalMangAcademy = useModal();
   const modalGrade = useModal();
   const modalSection = useModal();
   const modalClassroom = useModal();
+  const modalPeriod = useModal()
 
   return (
     <section
@@ -61,6 +63,10 @@ function HeaderAcademic({
             modalMangAcademy.closeModal();
             modalClassroom.openModal();
           }}
+          openPeriod={() => {
+            modalMangAcademy.closeModal();
+            modalPeriod.openModal();
+          }}
         />
       )}
       
@@ -82,6 +88,13 @@ function HeaderAcademic({
         <ModalCreateClassroom 
           closeModal={modalClassroom.closeModal}
           onSuccess={refetchClassroom}
+        />
+      )}
+
+      {modalPeriod.isOpen && (
+        <ModalCreateClassroom 
+          closeModal={modalClassroom.closeModal}
+          onSuccess={refetchPeriods}
         />
       )}
     </section>
