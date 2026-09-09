@@ -1,182 +1,114 @@
-import { useState } from "react"
-import { useClickOutside } from "../../../hooks/hookModal/useClickOutside"
-import { Title } from "../../atoms/title"
-import { FormItem } from "../../molecules/formItems"
-import { Button } from "../../atoms/button"
-import { apiFetch } from "../../../helpers/apiFetch"
+import { useState } from "react";
+import { useClickOutside } from "../../../hooks/hookModal/useClickOutside";
+import { Title } from "../../atoms/title";
+import { Small } from "../../atoms/small";
+import { FormItem } from "../../molecules/formItems";
+import { Button } from "../../atoms/button";
+import { useToast } from "../../../hooks/hookGlobals/useToast";
+import { useLoading } from "../../../hooks/hookGlobals/useLoading";
 
 function ModalRegisterBehaviors({
   closeModal,
-  student,
-  updateBehavior
+  student,          
+  calificar,  
 }) {
+  const [score, setScore] = useState(student?.score ?? 0);
+  const [description, setDescription] = useState("");
 
-  const [name, setName] = useState('')
-  const [grade, setGrade] = useState('')
-  const [section, setSection] = useState('')
-  const [behaviorType, setBehaviorType] = useState('')
-  const [qualification, setQuaification] = useState('')
-  const [description, setDescription] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
+  const title = "CALIFICAR COMPORTAMIENTO";
+  const modalRef = useClickOutside(closeModal);
+  const {showToast} =useToast()
+  const {loading, startLoading, stopLoading} =useLoading()
 
-  // Título del modal
-  const title = 'Calificar Comportamiento'
-
-  //cerrar modal al hacer click fuera
-  const modalRef = useClickOutside(closeModal)
-
-
-  //lista formulario
   const formFields = [
     {
-      text: 'Estudiante',
-      type: 'text',
-      name: 'name',
-      value: name,
-      onChange: (e) => setName(e.target.value)
+      text: "Nota (0 - 20)",
+      type: "number",
+      name: "score",
+      value: score,
+      min: 0,
+      max: 20,
+      onChange: (e) => setScore(Number(e.target.value)),
     },
-    [
-      {
-        text: 'Grado',
-        type: 'select',
-        name: 'grade',
-        value: grade,
-        onChange: (e) => setGrade(e.target.value),
-        options: [
-          { text: 'Seleccionar grado...', value: '' },
-          { text: 'Primero', value: '1' },
-          { text: 'Segundo', value: '2' },
-          { text: 'Tercero', value: '3' },
-          { text: 'Cuarto', value: '4' },
-          { text: 'Quinto', value: '5' }
-        ]
-      },
-      {
-        text: 'Sección',
-        type: 'select',
-        name: 'section',
-        value: section,
-        onChange: (e) => setSection(e.target.value),
-        options: [
-          { text: 'Secciona la sección..', value: '' },
-          { text: 'A', value: 'A' },
-          { text: 'B', value: 'B' },
-          { text: 'C', value: 'C' },
-          { text: 'D', value: 'D' },
-          { text: 'E', value: 'E' },
-          { text: 'F', value: 'F' }
-        ]
-      },
-    ],
-    [
-      {
-        text: 'Calificación',
-        type: 'select',
-        name: 'qualification',
-        value: qualification,
-        onChange: (e) => setQuaification(e.target.value),
-        options: [
-          { text: 'Calificar..', value: '' },
-          { text: 'AD', value: 'AD' },
-          { text: 'A', value: 'A' },
-          { text: 'B', value: 'B' },
-          { text: 'C', value: 'C' },
-        ]
-      },
-      {
-        text: 'Tipo incidente',
-        type: 'select',
-        name: 'behaviorType',
-        value: behaviorType,
-        onChange: (e) => setBehaviorType(e.target.value),
-        options: [
-          { text: 'Secciona un tipo..', value: '' },
-          { text: 'Participación destacada', value: 'A' },
-          { text: 'Respeto y compañerismo', value: 'B' },
-          { text: 'Distracción en clase', value: 'C' },
-          { text: 'Uso indebido del celular', value: 'D' },
-          { text: 'Impuntualidad', value: 'E' },
-          { text: 'Agresión verbal', value: 'F' }
-        ]
-      },
-
-    ],
     {
-      text: 'Descripcion',
-      type: 'textarea',
-      placeholder: 'Describe el incidente...',
-      name: '',
-      value: '',
-      onChange: (e) => setCalification(e.target.value)
+      text: "Descripción",
+      type: "textarea",
+      name: "description",
+      placeholder: "Describe el motivo de la calificación (opcional)...",
+      value: description,
+      onChange: (e) => setDescription(e.target.value),
     },
-  ]
+  ];
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
-    setSuccess('')
+    e.preventDefault();
+    showToast("");
 
-    try {
-      //validaciones
-
-      //Enviar datos
-      const data = await apiFetch('/behavior-control', 'POST',(
-        name,
-        grade,
-        section,
-        qualification,
-        behaviorType,
-        description
-      ))
-
-      setSuccess(data.message || 'Calificación exitosa')
-      name('')
-      grade('')
-      section('')
-      qualification('')
-      behaviorType('')
-      description('')
-    } catch (error) {
-      setError(error.message || 'Ocurrió un error al calificar estudiante')
+    if (score < 0 || score > 20) {
+      showToast("La nota debe estar entre 0 y 20", "error");
+      return;
     }
-  }
+
+    startLoading();
+    try {
+      await calificar({
+        idStudent: student.student.idStudent,
+        score,
+        description,
+      });
+      showToast("Calificación registrada correctamente", "success");
+      setTimeout(closeModal, 800); // pequeña pausa para que se alcance a leer el mensaje
+    } catch (err) {
+      showToast(err.message || "Ocurrió un error al calificar al estudiante",  "error");
+    } finally {
+      stopLoading();
+    }
+  };
+
   return (
-    <div
-
-      className="fixed inset-0 flex justify-center items-center 
-      bg-black/50 z-100 transition-opacity duration-300
-    ">
-
+    <div 
+      className="fixed inset-0 flex justify-center items-center bg-black/50 z-100 
+      transition-opacity duration-300">
       <form
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className=" flex flex-col gap-4
-          w-[25em] md:w-[50em] max-w-2xl bg-white
-          rounded-md shadow-xl p-6
-        "
+        className=" flex flex-col gap-4 w-[20em] md:w-[30em] max-w-2xl bg-white rounded-md shadow-xl p-6"
       >
-        {error && <span className="text-red-500 text-sm">{error}</span>}
-        {success && <span className="text-green-600 text-sm">{success}</span>}
-        <Title
-          text={title}
-          level="h3"
-          weight="bold"
-        />
-        <FormItem
+        <Title text={title} level="h3" weight="bold" />
+        <hr className="text-blueT"/>
+
+        <div className="flex flex-col gap-1 bg-gray-50 rounded-md p-3 ">
+          <span className="font-semibold text-black">
+            {student.student.firstname} {student.student.lastname}
+          </span>
+          <Small 
+            text={`${student?.grade ?? "-"}° Grado — Sección ${student?.section ?? "-"}`}
+            variant="ternary"
+            size="large"
+          />
+          {student?.scale && (
+          <Small
+            variant="ternary"
+            size="large"
+            text={`Nota actual: ${student.score} — ${student.scale}`} 
+          />
+          )}
+        </div>
+
+        <FormItem 
           formFields={formFields}
-          selectVariant="secondary"
         />
+
         <Button
-          text='Calificar'
+          text={loading ? "Guardando..." : "Calificar"}
           variant="primary"
-          type='submit'
+          type="submit"
+          disabled={loading}
         />
       </form>
     </div>
-  )
+  );
 }
 
-export { ModalRegisterBehaviors }
+export { ModalRegisterBehaviors };
