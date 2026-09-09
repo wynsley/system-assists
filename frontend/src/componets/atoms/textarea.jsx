@@ -14,9 +14,12 @@ function Textarea({
 
   const variants = {
     default: `bg-gray-200 rounded-lg px-3 py-2
-              border border-transparent text-blak/50
-              focus:outline-none focus:border-[#FFBB00] transition
+              border-none text-blak/50
+              focus:border-blue-500 transition 
+              focus:ring-1 focus:ring-blueT
+              outline-none
               outline-none transition-all duration-200 resize-y`,
+              
     primary: `w-full border-b border-[#a1a1a1] py-1 px-[1em] 
               bg-transparent resize-y`,
     secondary: `bg-transparent border-0 border-b border-blue

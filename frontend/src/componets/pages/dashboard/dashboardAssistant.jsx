@@ -11,15 +11,20 @@ function DashboardAssitantPage() {
 const {
   stats,
   rows: recentActivity,
-  loading,
+  loading: attendanceLoading,
 } = useAttendance({
   limit: 10,
   fetchSummary: true,   // trae resumen del día
 });
 
-const {behaviorSummary} = useBehavior({
-  fetchBehavior :  true
+const {
+  behaviorSummary,
+  loading : behaviorLoading
+} = useBehavior({
+  fetchBehavior :  true,
 })
+
+const loading = attendanceLoading || behaviorLoading
 
   // Transforma { AD, A, B, C } al formato que espera BehaviorPorcentage
   const behaviorGradePorcentage = behaviorSummary ? [
