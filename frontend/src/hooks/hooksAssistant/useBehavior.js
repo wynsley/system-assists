@@ -10,10 +10,11 @@ function useBehavior({
   grade,
   section,
   idPeriod,
+  fetchRoster : shouldFetchRoster = true,
   fetchBehavior = false
 } = {}) {
   const [rows, setRows] = useState([]);
-  const [total, setTotal] = useState(0);
+  const [behavior, setBehavior] = useState(0);
   const [period, setPeriod] = useState(null);
   const [behaviorSummary, setBehaviorSummary] = useState(null);
   const [message, setMessage] = useState(null); // ej. "Aún no hay un bimestre activo configurado."
@@ -22,6 +23,7 @@ function useBehavior({
 
   // ── Roster de comportamiento (nota + escala por estudiante) ─────────────
   const fetchRoster = useCallback(async () => {
+    if (!shouldFetchRoster) return;
     try {
       const params = new URLSearchParams();
 
@@ -40,24 +42,24 @@ function useBehavior({
       if (!ok || !data?.success) {
         setError("Error al obtener el listado de comportamiento");
         setRows([]);
-        setTotal(0);
+        setBehavior(0);
         setPeriod(null);
         setMessage(null);
         return;
       }
 
       setRows(data.data ?? []);
-      setTotal(data.pagination?.total ?? 0);
+      setBehavior(data.pagination?.behavior ?? 0);
       setPeriod(data.period ?? null);
       setMessage(data.message ?? null);
 
     } catch (error) {
-      console.error("Error fetchRoster:", err);
-      setError(err.message || "Error al obtener el listado de comportamiento");
+      console.error("Error fetchRoster:", error);
+      setError(error.message || "Error al obtener el listado de comportamiento");
       setRows([]);
-      setTotal(0);
+      setBehavior(0);
     }
-  }, [page, limit, search, sortBy, sortOrder, grade, section, idPeriod]);
+  }, [shouldFetchRoster,page, limit, search, sortBy, sortOrder, grade, section, idPeriod]);
 
 
   // ── Comportamiento AD/A/B/C ────────────────────────────────────────────
@@ -70,7 +72,7 @@ function useBehavior({
     if (idPeriod != null) params.set("idPeriod", idPeriod);
 
     const { ok, data } = await apiFetch(
-      `/behavior/summary?${params.toString()}`,
+      `/behavior/sumary?${params.toString()}`,
       "GET"
     );
     if (!ok || !data?.success) {
@@ -143,7 +145,7 @@ function useBehavior({
 
   return {
     rows,
-    total,
+    behavior,
     period,
     message,
     loading,
