@@ -11,7 +11,8 @@ function Small ({
   const variants = {
     default : `text-gray-500`,
     primary: `text-blueT`,
-    secondary: `text-black`
+    secondary: `text-black`,
+    ternary: `text-blue`
   }
 
   const sices = {
