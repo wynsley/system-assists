@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-function useModalAnimation(closeModal, delay = 300) {
+function useModalAnimation(closeModal, delay = 200) {
   const [isClosing, setIsClosing] = useState(false);
 
   const handleClose = () => {
