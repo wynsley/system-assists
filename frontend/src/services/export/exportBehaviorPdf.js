@@ -22,18 +22,18 @@ export function exportBehaviorPdf(
     fileName: 'CONSOLIDADO_COMPORTAMIENTO',
     headers: [
       "Estudiante",
-      "DNI",
       "Grado",
       "Sección",
-      "Calificación",
+      "Nota",
+      "Escala",
     ],
 
-    body: students.map(student => [
-      student.student,
-      student.dni,
-      student.grade,
-      student.section,
-      student.behavior.behaviorGrade
+    body: students.map((student) => [
+      `${student.student.firstname ?? ""} ${student.student.lastname ?? ""}`.trim() || "—",
+      student.grade ? `${student.grade}°` : "—",
+      student.section ?? "—",
+      student.score ?? "—",
+      student.scale ?? "—",
     ]),
 
     totalRecords: students.length,
