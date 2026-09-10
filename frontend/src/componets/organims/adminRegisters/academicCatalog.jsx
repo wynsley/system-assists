@@ -6,6 +6,7 @@ import { TitleAndIcon } from "../../molecules/titleAndIcon";
 // Modals
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
 import { ModalCreateClassroom } from "../../modals/adminRegisters/ModalCreateClassroom";
+import { ModalCreatePeriod } from "../../modals/modalCreatePeriod";
 // Hooks
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
@@ -14,9 +15,11 @@ import { useModal } from "../../../hooks/hookModal/useModal";
 import { GradeAndSeccions } from "./listGradesAndSections";
 import { Paginations } from "../../molecules/adminRegisters/Paginations";
 import { Filters } from "../../molecules/adminRegisters/filters";
+import { AcademicPeriods } from "./academicPeriod";
 
 function AcademicCatalog({
   classroomHook,
+  periodsHook,
   page,
   setPage,
   search,
@@ -30,6 +33,10 @@ function AcademicCatalog({
 }) {
   // HOOKS
   const [editingClassroom, setEditingClassroom] = useState(null);
+  const [editingPeriod, setEditingPeriod] = useState(null);
+  const editPeriodModal = useModal();
+  const editClassroomModal = useModal();
+
   const { showToast } = useToast();
   const {
     config,
@@ -37,7 +44,13 @@ function AcademicCatalog({
     closeConfirm,
   } = useConfirm();
 
-  const editClassroomModal = useModal();
+  //hook de los periodos
+  const {
+    periods,
+    loading: loadingPeriods,
+    deletePeriod,
+    refetch: refetchPeriods,
+  } = periodsHook;
 
   // DATA DEL HOOK
   const {
@@ -51,7 +64,6 @@ function AcademicCatalog({
     deleteGrade,
     deleteSection,
     refetchClassrooms,
-    refetchCatalogs,
   } = classroomHook;
 
   const sectionsForFilter = (() => {
@@ -109,7 +121,6 @@ function AcademicCatalog({
   };
 
   // ELIMINAR SECCIÓN
-
   const handleDeleteSection = (section) => {
     confirm({
       title: `¿Eliminar sección ${section.grade}° ${section.section}?`,
@@ -168,6 +179,27 @@ function AcademicCatalog({
     editClassroomModal.openModal();
   };
 
+  //EDITAR PERIODO
+  const handleEditPeriod = (period) => {
+    setEditingPeriod(period);
+    editPeriodModal.openModal();
+  };
+
+  //ELIMINAR PERIODO
+  const handleDeletePeriod = (period) => {
+    confirm({
+      title: `¿Eliminar ${period.bimester}° bimestre del ${period.year}?`,
+      description: "Esta acción no se puede deshacer.",
+      onConfirm: async () => {
+        try {
+          await deletePeriod(period.idPeriod);
+          showToast("Bimestre eliminado correctamente", "success");
+        } catch (error) {
+          showToast(error.message || "No se pudo eliminar el bimestre", "error");
+        }
+      },
+    });
+  };
   // HEADERS
   const classroomHeaders = [
     "Año",
@@ -304,7 +336,7 @@ function AcademicCatalog({
         />
 
         {/*TABLA*/}
-        <div className={loadingClassrooms ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+        <div className={loadingClassrooms ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity flex flex-col gap-3"}>
           <Table
             headers={classroomHeaders}
             data={classrooms}
@@ -319,23 +351,13 @@ function AcademicCatalog({
           />
         </div>
       </div>
-
-      {/* MODAL CONFIRMACIÓN*/}
-      {config && (
-        <ModalConfirm
-          title={config.title}
-          description={
-            config.description
-          }
-          onConfirm={
-            config.onConfirm
-          }
-          closeModal={closeConfirm}
-          variant={
-            config.variant ?? "danger"
-          }
-        />
-      )}
+      
+      <AcademicPeriods
+        loadingPeriods={loadingPeriods}
+        periods={periods}
+        handleEditPeriod={handleEditPeriod}
+        handleDeletePeriod={handleDeletePeriod}
+      />
 
       {/* MODAL EDITAR AULA*/}
       {editClassroomModal.isOpen &&
@@ -353,6 +375,31 @@ function AcademicCatalog({
             }
           />
         )}
+      {/* MODAL EDITAR BIMESTRE */}
+      {editPeriodModal.isOpen && editingPeriod && (
+        <ModalCreatePeriod
+          mode="edit"
+          initialData={editingPeriod}
+          closeModal={editPeriodModal.closeModal}
+          onSuccess={refetchPeriods}
+        />
+      )}
+      {/* MODAL CONFIRMACIÓN*/}
+      {config && (
+        <ModalConfirm
+          title={config.title}
+          description={
+            config.description
+          }
+          onConfirm={
+            config.onConfirm
+          }
+          closeModal={closeConfirm}
+          variant={
+            config.variant ?? "danger"
+          }
+        />
+      )}
     </div>
   );
 }

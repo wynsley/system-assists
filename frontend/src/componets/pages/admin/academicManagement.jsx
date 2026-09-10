@@ -6,6 +6,7 @@ import { AcademicCatalog } from "../../organims/adminRegisters/academicCatalog"
 import { HeaderAcademic } from "../../organims/adminRegisters/headerAcamdemic"
 import { MyTemplate } from "../../templates/myTemplate"
 import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
+import { useAcademicPeriod } from "../../../hooks/hoocksAdmin/useAcademicPeriod";
 
 function AcademicManagement() {
 
@@ -16,7 +17,7 @@ function AcademicManagement() {
   const [mySearch, setMySearch] = useState('')
 
   const debouncedSearch = useDebounce(mySearch, 400)
-                                                                                                                                                                                                                                                                                                                                            
+
   //hooks de grados, seccion y aulas
   const gradesHook = useGrades({ limit: 50 });
   const sectionsHook = useSections({ limit: 100 });
@@ -28,6 +29,7 @@ function AcademicManagement() {
     section: sectionFilter || undefined,
     search: debouncedSearch || undefined
   })
+  const periodsHook = useAcademicPeriod();
 
   return (
     <MyTemplate >
@@ -35,12 +37,14 @@ function AcademicManagement() {
         refetchGrades={gradesHook.refetch}
         refethcSections={sectionsHook.refetch}
         refetchClassroom={classroomHook.refetch}
+        refetchPeriods={periodsHook.refetch}
       />
       <hr className="w-[96%] md:w-[90%] md:max-w-7xl mx-auto text-gray-400 rounded-full mt-1" />
       <AcademicCatalog
         gradesHook={gradesHook}
         sectionsHook={sectionsHook}
         classroomHook={classroomHook}
+        periodsHook={periodsHook}
         page={page}
         setPage={setPage}
         search={mySearch}

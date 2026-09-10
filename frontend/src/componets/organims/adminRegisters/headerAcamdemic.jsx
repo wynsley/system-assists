@@ -6,6 +6,7 @@ import { ModalMangAcademic } from "../../modals/adminRegisters/modalMangAcademic
 import { ModalCreateGrade } from "../../modals/adminRegisters/ModalCreateGrade";
 import { ModalCreateSection } from "../../modals/adminRegisters/modalCreateSection";
 import { ModalCreateClassroom } from "../../modals/adminRegisters/ModalCreateClassroom";
+import { ModalCreatePeriod } from "../../modals/modalCreatePeriod";
 
 import { useModal } from "../../../hooks/hookModal/useModal";
 
@@ -92,8 +93,8 @@ function HeaderAcademic({
       )}
 
       {modalPeriod.isOpen && (
-        <ModalCreateClassroom 
-          closeModal={modalClassroom.closeModal}
+        <ModalCreatePeriod 
+          closeModal={modalPeriod.closeModal}
           onSuccess={refetchPeriods}
         />
       )}
