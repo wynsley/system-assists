@@ -1,4 +1,4 @@
-import { AttendanceSearch } from "../../molecules/attendanceControl/attendanceSearch";
+import { Search } from "../../molecules/search";
 import { exportAttendanceExcel } from "../../../services/export/exportAttendanceExcel";
 import { exportAttendancePdf } from "../../../services/export/exportAttendancePdf";
 import { DownloadButtons } from "../../molecules/downloadButtons";
@@ -22,7 +22,7 @@ function FiltersSearchDownload({
   return (
     <div className="grid lg:grid-cols-2 gap-5 my-5">
       <div className="flex items-center justify-between gap-4">
-        <AttendanceSearch search={search} setSearch={setSearch} />
+        <Search search={search} setSearch={setSearch} />
         <DownloadButtons
           onExcel={() => exportAttendanceExcel(students)}
           onPdf={() => exportAttendancePdf(students, grade, section)}
