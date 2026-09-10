@@ -9,16 +9,17 @@ import { useLoading } from "../../../hooks/hookGlobals/useLoading";
 
 function ModalRegisterBehaviors({
   closeModal,
-  student,          
-  calificar,  
+  student,
+  calificar,
+  isCurrentPeriod = true,
 }) {
   const [score, setScore] = useState(student?.score ?? 0);
   const [description, setDescription] = useState("");
 
   const title = "CALIFICAR COMPORTAMIENTO";
   const modalRef = useClickOutside(closeModal);
-  const {showToast} =useToast()
-  const {loading, startLoading, stopLoading} =useLoading()
+  const { showToast } = useToast()
+  const { loading, startLoading, stopLoading } = useLoading()
 
   const formFields = [
     {
@@ -59,14 +60,14 @@ function ModalRegisterBehaviors({
       showToast("Calificación registrada correctamente", "success");
       setTimeout(closeModal, 800); // pequeña pausa para que se alcance a leer el mensaje
     } catch (err) {
-      showToast(err.message || "Ocurrió un error al calificar al estudiante",  "error");
+      showToast(err.message || "Ocurrió un error al calificar al estudiante", "error");
     } finally {
       stopLoading();
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 flex justify-center items-center bg-black/50 z-100 
       transition-opacity duration-300">
       <form
@@ -76,27 +77,32 @@ function ModalRegisterBehaviors({
         className=" flex flex-col gap-4 w-[20em] md:w-[30em] max-w-2xl bg-white rounded-md shadow-xl p-6"
       >
         <Title text={title} level="h3" weight="bold" />
-        <hr className="text-blueT"/>
+        <hr className="text-blueT" />
+        {!isCurrentPeriod && (
+          <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-md p-2 text-xs">
+            Estás viendo un bimestre pasado. La calificación se registrará en el bimestre activo actual, no en este.
+          </div>
+        )}
 
         <div className="flex flex-col gap-1 bg-gray-50 rounded-md p-3 ">
           <span className="font-semibold text-black">
             {student.student.firstname} {student.student.lastname}
           </span>
-          <Small 
+          <Small
             text={`${student?.grade ?? "-"}° Grado — Sección ${student?.section ?? "-"}`}
             variant="ternary"
             size="large"
           />
           {student?.scale && (
-          <Small
-            variant="ternary"
-            size="large"
-            text={`Nota actual: ${student.score} — ${student.scale}`} 
-          />
+            <Small
+              variant="ternary"
+              size="large"
+              text={`Nota actual: ${student.score} — ${student.scale}`}
+            />
           )}
         </div>
 
-        <FormItem 
+        <FormItem
           formFields={formFields}
         />
 
@@ -104,7 +110,7 @@ function ModalRegisterBehaviors({
           text={loading ? "Guardando..." : "Calificar"}
           variant="primary"
           type="submit"
-          disabled={loading}
+          disabled={loading || !isCurrentPeriod}
         />
       </form>
     </div>

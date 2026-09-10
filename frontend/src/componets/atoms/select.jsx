@@ -29,7 +29,7 @@ function Select({
 
   const sizes ={
     small : 'text-[.9em]',
-    medium : 'text-[1.2em]',
+    medium : 'text-0.9 md:text-[1.2em]',
     large : 'text-[1.5em]'
   } 
 
