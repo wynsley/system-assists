@@ -11,7 +11,7 @@ import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
 import { useAcademicPeriod } from "../../../hooks/hoocksAdmin/useAcademicPeriod";
 
 function BehaviorControlPage() {
-
+  const [selectedDate, setSelectedDate] = useState("");
   const [filters, setFilters] = useState({
     grade: "",
     section: "",
@@ -35,7 +35,8 @@ function BehaviorControlPage() {
     loading: behaviorLoading,
     calificar,
     isFetching,
-    message 
+    message,
+    refetch: refechBehavior
   } = useBehavior({
     fetchBehavior: true,
     fetchRoster: true,
@@ -47,13 +48,11 @@ function BehaviorControlPage() {
 
   const {
     rows: incidentList,
-    total,
     loading: incidentLoading,
-    error,
     createIncident,
   } = useIncident({
-    startDate: filters.startDate,
-    endDate: filters.endDate,
+    startDate: selectedDate || undefined,
+    endDate: selectedDate || undefined,
     search: filters.search,
   })
 
@@ -111,10 +110,13 @@ function BehaviorControlPage() {
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}
         isFetching={isFetching}
+        refechBehavior = {refechBehavior}
       />
         
       <BehaviorRecords
         incidentList = {incidentList}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
       />
 
     </MyTemplate>

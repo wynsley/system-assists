@@ -27,6 +27,7 @@ function FiltersBehavior({
           search={search}
           setSearch={setSearch}
         />
+        
         <Select
           name="period"
           value={selectedPeriod ?? ""}

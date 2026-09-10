@@ -29,7 +29,7 @@ function FiltersSearchDownload({
         />
       </div>
       <div className="flex items-center justify-end gap-2">
-        {/* 🔹 Filtro por fecha */}
+        {/* Filtro por fecha */}
         <input
           type="date"
           value={date}

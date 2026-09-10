@@ -1,25 +1,26 @@
-import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle"
-import { useStudentFilters } from "../../../hooks/hooksAssistant/useStudentFilters"
-import { Title } from "../../atoms/title"
-import { Table } from "../tableReusable"
-import { Search } from "../../molecules/search"
+import { useState, useMemo } from "react";
+import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
+import { Title } from "../../atoms/title";
+import { Table } from "../tableReusable";
+import { Search } from "../../molecules/search";
 
-function BehaviorRecords({ incidentList }) {
-  const title = "HISTORIAL DE REGISTROS"
-  //hook filtros y buscadores
-  const {
-    search,
-    setSearch,
-    filtered,
-  } = useStudentFilters(incidentList)
+function BehaviorRecords({ incidentList = [], selectedDate, setSelectedDate }) {
+  const title = "HISTORIAL DE REGISTROS";
+  const [search, setSearch] = useState("");
 
-  //controlar interaccion por fila
-  const {
-    openRowId,
-    closeRow,
-    openRow,
-  } = useRowToggle();
+  const { openRowId, closeRow, openRow } = useRowToggle();
 
+  const filtered = useMemo(() => {
+    const term = search.toLowerCase();
+    return incidentList.filter((incident) => {
+      if (!term) return true;
+      return (
+        incident.student?.fullname?.toLowerCase().includes(term) ||
+        incident.incidentName?.toLowerCase().includes(term) ||
+        incident.auxiliar?.fullname?.toLowerCase().includes(term)
+      );
+    });
+  }, [incidentList, search]);
 
   const headers = [
     "Fecha",
@@ -29,74 +30,76 @@ function BehaviorRecords({ incidentList }) {
     "Descripción",
     "Puntos",
     "Registró",
-  ]
+  ];
+
   return (
-    <section className="mt-6 w-[96%] md:w-[90%] md:max-w-7xl mx-auto
-      flex flex-col gap-3
-    ">
-      <Title
-        text={title}
-        level="h3"
-        weight="bold"
-      />
-      <Search
-        search={search}
-        setSearch={setSearch}
-      />
+    <section className="mt-6 w-[96%] md:w-[90%] md:max-w-7xl mx-auto flex flex-col gap-3">
+      <Title text={title} level="h3" weight="bold" />
+
+      <div className="flex items-center justify-between gap-3 w-full">
+        <Search 
+          search={search} 
+          setSearch={setSearch} 
+          className="w-auto"
+        />
+        <input
+          type="date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          className="w-auto shrink-0 p-2 rounded-md border border-borderC bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue/20"
+        />
+      </div>
+
       <Table
         headers={headers}
         emptyMessage="No hay registros disponibles"
-        // mapear el historial de registros
         data={filtered}
-        renderRow={(student) => {
-
-          const isActive =
-            openRowId === student.id;
+        renderRow={(incident) => {
+          const isActive = openRowId === incident.idIncident;
+          const isPositive = incident.incidentType === "POSITIVO";
 
           return (
             <tr
-              key={student.id}
+              key={incident.idIncident}
               className={`
                 border-b border-gray-100
                 transition-colors duration-300
-                ${isActive
-                  ? "bg-blue-100"
-                  : "hover:bg-gray-50"}
+                ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}
               `}
             >
               <td className="px-6 py-4">
-                {student.behavior.date}
+                {new Date(incident.date).toLocaleDateString()}
               </td>
 
               <td className="px-6 py-4">
-                {student.student}
+                {incident.student?.fullname ?? "—"}
               </td>
 
               <td className="px-6 py-4">
-                {student.grade} {student.section}
+                {incident.student?.grade}° {incident.student?.section}
               </td>
+
               <td className="px-6 py-4 text-sm">
-                {student.behavior.behaviorGrade}
+                {incident.incidentName}
+              </td>
+
+              <td className="px-6 py-4 text-sm">
+                {incident.note || "—"}
+              </td>
+
+              <td className={`px-6 py-4 font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
+                {isPositive ? "+" : "-"}{incident.points}
               </td>
 
               <td className="px-6 py-4">
-                <DespliegueDescription
-                  behavior={student}
-                  openRowId={openRowId}
-                  openRow={openRow}
-                  closeRow={closeRow}
-                />
-              </td>
-              <td className="px-6 py-4 relative">
-              </td>
-              <td className="px-6 py-4 relative">
+                {incident.auxiliar?.fullname ?? "—"}
               </td>
             </tr>
           );
         }}
       />
     </section>
-  )
+  );
 }
 
-export { BehaviorRecords }
+export { BehaviorRecords };

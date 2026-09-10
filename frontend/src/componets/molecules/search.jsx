@@ -1,6 +1,6 @@
 import { HiMagnifyingGlass } from "react-icons/hi2"
 
-function Search ({search, setSearch}) {
+function Search ({search, setSearch, className = ""}) {
   return(
     <div className="relative w-full">
         <HiMagnifyingGlass
@@ -13,12 +13,12 @@ function Search ({search, setSearch}) {
           placeholder="Buscar por nombre o dni..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="
-            w-full pl-9 pr-4 py-2.5
+          className={`w-full pl-9 pr-4 py-2.5
             rounded-md border border-borderC
             bg-white text-sm
             focus:outline-none focus:ring-2 focus:ring-blue/20
-          "
+            ${className}
+            `}
         />
       </div>
   )
