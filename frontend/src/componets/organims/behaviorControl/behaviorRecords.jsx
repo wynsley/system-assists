@@ -1,32 +1,17 @@
-import { useModal } from "../../../hooks/hookModal/useModal"
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle"
 import { useStudentFilters } from "../../../hooks/hooksAssistant/useStudentFilters"
 import { Title } from "../../atoms/title"
 import { Table } from "../tableReusable"
-import { FiltersBehavior } from "./FilterSerchDowldBehavior"
-import { DespliegueDescription } from "../../molecules/behaviorControl/despliegueDescription"
+import { Search } from "../../molecules/search"
 
-function BehaviorRecords({ behaviors }) {
+function BehaviorRecords({ incidentList }) {
   const title = "HISTORIAL DE REGISTROS"
   //hook filtros y buscadores
   const {
     search,
     setSearch,
     filtered,
-    grade,
-    setGrade,
-    section,
-    setSection
-  } = useStudentFilters(behaviors)
-
-  //hook modal
-  const {
-    isOpen,
-    setIsOpen,
-    openModal,
-    closeModal,
-    toggleModal
-  } = useModal()
+  } = useStudentFilters(incidentList)
 
   //controlar interaccion por fila
   const {
@@ -35,20 +20,15 @@ function BehaviorRecords({ behaviors }) {
     openRow,
   } = useRowToggle();
 
-  //abrir modal y ponerla activa
-  const handleEdit = (student) => {
-    setSelectedStudent(student);
-    openModal();
-  };
 
   const headers = [
     "Fecha",
     "Estudiante",
     "Grado y Sección",
-    "Calificación",
-    "Observación",
-    "Registrado por",
-    "Acciones"
+    "Incidente",
+    "Descripción",
+    "Puntos",
+    "Registró",
   ]
   return (
     <section className="mt-6 w-[96%] md:w-[90%] md:max-w-7xl mx-auto
@@ -59,15 +39,9 @@ function BehaviorRecords({ behaviors }) {
         level="h3"
         weight="bold"
       />
-      <FiltersBehavior
+      <Search
         search={search}
         setSearch={setSearch}
-        grade={grade}
-        setGrade={setGrade}
-        section={section}
-        setSection={setSection}
-        students={students}
-        showBehaviorFilter={true}
       />
       <Table
         headers={headers}
