@@ -18,13 +18,13 @@ const incidentCatalogSchema = {
       name: nameField({
         label: "El nombre de la categoría de incidente",
         min: 3,
-        max: 50,
+        max: 100,
         required: true,
       }),
       description: nameField({
         label: "La descripción de la categoría de incidente",
         min: 3,
-        max: 100,
+        max: 200,
         required: true,
         text: true,
       }),
@@ -49,13 +49,13 @@ const incidentCatalogSchema = {
       name: nameField({
         label: "El nombre de la categoría de incidente",
         min: 3,
-        max: 50,
+        max: 100,
         required: false,
       }),
       description: nameField({
         label: "La descripción de la categoría de incidente",
         min: 3,
-        max: 100,
+        max: 200,
         required: false,
         text: true,
       }),
