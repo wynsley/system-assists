@@ -54,4 +54,4 @@ export function useFilterOptions(students = []) {
     gradeOptions,
     sectionOptions,
   };
-}
+} 
