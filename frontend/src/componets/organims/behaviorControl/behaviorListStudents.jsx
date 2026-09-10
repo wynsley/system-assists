@@ -6,21 +6,34 @@ import { ModalRegisterBehaviors } from "../../modals/assistant/modalRegisterBeha
 import { ModalRegisterIncident } from "../../modals/assistant/modalRegisterIncident";
 import { FaUserEdit } from "react-icons/fa";
 import { Button } from "../../atoms/button";
+import { behavior_scale_style } from "../../../config/assistant/behavior";
 
-function BehaviorListStudents({ students, calificar, createIncident, filters, setFilters, loading }) {
+function BehaviorListStudents({
+  students,
+  calificar,
+  createIncident,
+  filters,
+  setFilters,
+  loading,
+  canCalificar = true,
+  periods = [],
+  selectedPeriod,
+  setSelectedPeriod,
+  isFetching
+}) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [modalType, setModalType] = useState(null);
-  const {openRowId }= useRowToggle()
+  const { openRowId } = useRowToggle()
 
   const handleEdit = (student) => {
-  setSelectedStudent(student);
-  setModalType("calificar");
-};
+    setSelectedStudent(student);
+    setModalType("calificar");
+  };
 
-const handleIncident = (student) => {
-  setSelectedStudent(student);
-  setModalType("incidente");
-};
+  const handleIncident = (student) => {
+    setSelectedStudent(student);
+    setModalType("incidente");
+  };
 
   const closeModal = () => {
     setModalType(null);
@@ -37,56 +50,63 @@ const handleIncident = (student) => {
         setGrade={(value) => setFilters((prev) => ({ ...prev, grade: value }))}
         section={filters.section}
         setSection={(value) => setFilters((prev) => ({ ...prev, section: value }))}
-        students={students}
         showDownload={true}
         filtered={students}
+        periods={periods}
+        students={students}
+        setSelectedPeriod={setSelectedPeriod}
+        selectedPeriod={selectedPeriod}
       />
-
-      <Table
-        headers={headers}
-        data={students}
-        loading={loading}
-        renderRow={(student) => {
-          const isActive = openRowId === student.idClassroomStudent;
-          console.log(student)
-          return (
-            <tr
-              key={student.idClassroomStudent}
-              className={`border-b border-gray-100 transition-colors duration-300 ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}`}
-            >
-              <td className="px-6 py-4">{student.student.firstname} {student.student.lastname}</td>
-              <td className="px-6 py-4">{student.grade}</td>
-              <td className="px-6 py-4">{student.section}</td>
-              <td className="px-6 py-4">{student.score}</td>
-              <td className="px-6 py-4">{student.scale}</td>
-              <td className="px-6 py-4 relative">
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => handleEdit(student)}
-                    className="flex items-center gap-2 text-white bg-blueT py-1 px-2 rounded-md transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    <FaUserEdit className="size-5 text-blue-100" />
-                    Calificar
-                  </Button>
-                  <Button
-                    onClick={() => handleIncident(student)}
-                    className="flex items-center gap-2 text-white bg-blue py-1 px-2 rounded-md transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    <FaUserEdit className="size-5 text-blue-100" />
-                    incidente
-                  </Button>
-                </div>
-              </td>
-            </tr>
-          );
-        }}
-      />
+      <div className={isFetching ? "opacity-60 transition-opacity duration-200" : "transition-opacity duration-200"}>
+        <Table
+          headers={headers}
+          data={students}
+          loading={loading}
+          renderRow={(student) => {
+            const isActive = openRowId === student.idClassroomStudent;
+            console.log(student)
+            return (
+              <tr
+                key={student.idClassroomStudent}
+                className={`border-b border-gray-100 transition-colors duration-300 ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}`}
+              >
+                <td className="px-6 py-4">{student.student.firstname} {student.student.lastname}</td>
+                <td className="px-6 py-4">{student.grade}</td>
+                <td className="px-6 py-4">{student.section}</td>
+                <td className="px-6 py-4">{student.score}</td>
+                <td className={`px-6 py-4 text-extrbold text-lg ${behavior_scale_style.secondary[student.scale]} ?? ""`}>{student.scale}</td>
+                <td className="px-6 py-4 relative">
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => handleEdit(student)}
+                      disabled={!canCalificar}
+                      className="flex items-center gap-2 text-white bg-blueT py-1 px-2 rounded-md transition-all duration-300 hover:-translate-y-0.5"
+                    >
+                      <FaUserEdit className="size-5 text-blue-100" />
+                      Calificar
+                    </Button>
+                    <Button
+                      onClick={() => handleIncident(student)}
+                      disabled={!canCalificar}
+                      className="flex items-center gap-2 text-white bg-blue py-1 px-2 rounded-md transition-all duration-300 hover:-translate-y-0.5"
+                    >
+                      <FaUserEdit className="size-5 text-blue-100" />
+                      incidente
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            );
+          }}
+        />
+      </div>
 
       {modalType === "calificar" && selectedStudent && (
         <ModalRegisterBehaviors
           closeModal={closeModal}
           student={selectedStudent}
           calificar={calificar}
+          isCurrentPeriod={canCalificar}
         />
       )}
       {modalType === "incidente" && selectedStudent && (
