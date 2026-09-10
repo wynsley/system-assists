@@ -2,13 +2,15 @@ import { BannerBehaviorAssistant } from "../../organims/behaviorControl/BannerBe
 import { CardsScales } from "../../organims/behaviorControl/cardsBehaviorScales";
 import { MyTemplate } from "../../templates/myTemplate";
 import { BehaviorListStudents } from "../../organims/behaviorControl/behaviorListStudents";
-
+import { BehaviorRecords } from "../../organims/behaviorControl/behaviorRecords";
 import { useBehavior } from "../../../hooks/hooksAssistant/useBehavior";
 import { behavior_scale_style } from "../../../config/assistant/behavior";
 import { useIncident } from "../../../hooks/hooksAssistant/useIncidents";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
+import { useAcademicPeriod } from "../../../hooks/hoocksAdmin/useAcademicPeriod";
 
-function BehaviorControlPage () {
+function BehaviorControlPage() {
 
   const [filters, setFilters] = useState({
     grade: "",
@@ -16,87 +18,107 @@ function BehaviorControlPage () {
     search: "",
     idPeriod: null,
   })
+
+  const debouncedSearch = useDebounce(filters.search, 400);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
+  const { periods, currentPeriod, fetchCurrentPeriod } = useAcademicPeriod();
+
+  useEffect(() => {
+    fetchCurrentPeriod().then((current) => {
+      if (current) setSelectedPeriod(current.idPeriod);
+    });
+  }, [fetchCurrentPeriod]);
+
   const {
-  rows : students,
-  behaviorSummary,
-  loading: behaviorLoading,
-  calificar,
-  getConsolidado
-} = useBehavior({ 
-  fetchBehavior: true, 
-  fetchRoster: true,
-  grade: filters.grade,
-  section: filters.section,
-  search: filters.search,
-  idPeriod: filters.idPeriod,
-});
+    rows: students,
+    behaviorSummary,
+    loading: behaviorLoading,
+    calificar,
+    isFetching,
+    message 
+  } = useBehavior({
+    fetchBehavior: true,
+    fetchRoster: true,
+    grade: filters.grade,
+    section: filters.section,
+    search: debouncedSearch,
+    idPeriod: selectedPeriod,
+  });
 
+  const {
+    rows: incidentList,
+    total,
+    loading: incidentLoading,
+    error,
+    createIncident,
+  } = useIncident({
+    startDate: filters.startDate,
+    endDate: filters.endDate,
+    search: filters.search,
+  })
 
-const {
-  rows : incidentList,
-  total,
-  loading: incidentLoading,
-  error,
-  createIncident,
-} =useIncident({
-  startDate: filters.startDate,
-  endDate: filters.endDate,
-  search: filters.search,
-})
+  const isCurrentPeriod = selectedPeriod === currentPeriod?.idPeriod;
+  // POrcentaje de calificaiones del comportamiento
 
-// POrcentaje de calificaiones del comportamiento
+  const behaviorScales = behaviorSummary ? [
+    {
+      name: "AD",
+      description: "Logro Destacado",
+      progress: behaviorSummary.AD ?? 0,
+      className: behavior_scale_style.primary.AD
+    },
+    {
+      name: "A",
+      description: "Logro Esperado",
+      progress: behaviorSummary.A ?? 0,
+      className: behavior_scale_style.primary.A
+    },
+    {
+      name: "B",
+      description: "En Proceso",
+      progress: behaviorSummary.B ?? 0,
+      className: behavior_scale_style.primary.B
+    },
+    {
+      name: "C",
+      description: "En Inicio",
+      progress: behaviorSummary.C ?? 0,
+      className: behavior_scale_style.primary.C
+    },
+  ] : [];
 
-const behaviorScales = behaviorSummary ? [
-  { 
-    name: "AD", 
-    description: "Logro Destacado", 
-    progress: behaviorSummary.AD ?? 0 ,
-    className: behavior_scale_style.AD
-  },
-  { 
-    name: "A",  
-    description: "Logro Esperado",  
-    progress: behaviorSummary.A  ?? 0,
-    className: behavior_scale_style.A
-  },
-  { 
-    name: "B",  
-    description: "En Proceso",      
-    progress: behaviorSummary.B  ?? 0,
-    className: behavior_scale_style.B
-  },
-  { 
-    name: "C",  
-    description: "En Inicio",       
-    progress: behaviorSummary.C  ?? 0,
-    className: behavior_scale_style.C
-  },
-] : [];
-
-  return(
-    <MyTemplate> 
-      <BannerBehaviorAssistant/>
+  return (
+    <MyTemplate>
+      <BannerBehaviorAssistant />
       <CardsScales
-        behaviorStatics = {behaviorScales}
-        loading = {behaviorLoading}
+        behaviorStatics={behaviorScales}
+        loading={behaviorLoading}
       />
+      {message && (
+        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-md p-3 text-sm w-[96%] md:w-[90%] md:max-w-7xl mx-auto">
+          {message}
+        </div>
+      )}
       <BehaviorListStudents
         students={students}
         calificar={calificar}
+        canCalificar ={isCurrentPeriod && !message}
         createIncident={createIncident}
         filters={filters}
         setFilters={setFilters}
         loading={behaviorLoading}
+        periods={periods}
+        selectedPeriod={selectedPeriod}
+        setSelectedPeriod={setSelectedPeriod}
+        isFetching={isFetching}
       />
-      {/*
         
       <BehaviorRecords
-        updateBehavior={updateBehavior}
+        incidentList = {incidentList}
       />
-      */}
-      
+
     </MyTemplate>
   )
 }
 
-export {BehaviorControlPage}
+export { BehaviorControlPage }

@@ -1,11 +1,8 @@
 import { Select } from "../../atoms/select";
-import { AttendanceSearch } from "../../molecules/attendanceControl/attendanceSearch";
-import { DownloadButtons } from "../../molecules/downloadButtons";
+import { Search } from "../../molecules/search";
 import { FiltersGradeSection } from "../../molecules/filtersGradeSection";
 import { useFilterOptions } from "../../../hooks/hooksAssistant/useFilterOptions";
-//logica de exportar excel/pdf
-import { exportBehaviorExcel } from "../../../services/export/exportBehaviorExcel";
-import { exportBehaviorPdf } from "../../../services/export/exportBehaviorPdf";
+
 
 function FiltersBehavior({
   search,
@@ -15,19 +12,32 @@ function FiltersBehavior({
   section,
   setSection,
   students,
-  showDownload = false,
-  filtered,
   showBehaviorFilter,
+  selectedPeriod,
+  setSelectedPeriod,
+  periods
 }) {
 
   const { gradeOptions, sectionOptions } = useFilterOptions(students);
 
   return (
     <div className="grid lg:grid-cols-2 gap-5 mt-8">
-      <AttendanceSearch
-        search={search}
-        setSearch={setSearch}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <Search
+          search={search}
+          setSearch={setSearch}
+        />
+        <Select
+          name="period"
+          value={selectedPeriod ?? ""}
+          onChange={(e) => setSelectedPeriod(Number(e.target.value))}
+          options={periods.map((p) => ({
+            value: p.idPeriod,
+            text: `${p.bimester}° Bimestre ${p.year}`,
+          }))}
+          variant="primary"
+        />
+      </div>
 
       <div className="flex items-center justify-end gap-2">
         <FiltersGradeSection
@@ -39,12 +49,6 @@ function FiltersBehavior({
           sectionOptions={sectionOptions}
           showBehaviorFilter={showBehaviorFilter}
         />
-        {showDownload && (
-          <DownloadButtons
-            onExcel={() => exportBehaviorExcel(filtered)}
-            onPdf={() => exportBehaviorPdf(filtered, grade, section)}
-          />
-        )}
       </div>
 
 
