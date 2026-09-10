@@ -7,12 +7,13 @@ import { Button } from "../../atoms/button";
 import { getLocalDateString } from "../../../utils/date";
 import { useToast } from "../../../hooks/hookGlobals/useToast"; 
 import { useLoading } from "../../../hooks/hookGlobals/useLoading";
-import { useIncidentCatalog } from "../../../hooks/hooksAssistant/useIncidentCalatalog";
+import { useIncidentCatalog } from "../../../hooks/hooksAssistant/useIncidentCatalog";
 
 function ModalRegisterIncident({
   closeModal,
   student,        
-  createIncident, 
+  createIncident,
+  refetchBehavior
 }) {
   const { 
     grouped, 
@@ -78,11 +79,12 @@ function ModalRegisterIncident({
 
     try {
       await createIncident({
-        idStudent: student.idStudent,
+        idStudent: student.student.idStudent,
         idIncidentCatalog: Number(idIncidentCatalog),
         date: getLocalDateString(), 
         note: description,
       });
+      await refetchBehavior?.();
       showToast("Incidente registrado correctamente",  "success");
       setTimeout(closeModal, 800);
     } catch (err) {
@@ -98,13 +100,15 @@ function ModalRegisterIncident({
         ref={modalRef}
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="flex flex-col gap-4 w-[25em] md:w-[50em] max-w-2xl bg-white rounded-md shadow-xl p-6"
+        className="flex flex-col gap-4 w-[20em] md:w-[30em] max-w-2xl bg-white rounded-md shadow-xl p-6"
       >
         <Title text="Registrar Incidente" level="h3" weight="bold" />
 
         {/* Identificación del estudiante (solo lectura, viene de la fila) */}
-        <div className="flex flex-col gap-1 bg-gray-50 rounded-md p-3 border border-borderC">
-          <span className="font-semibold text-gray-800">{student?.fullname}</span>
+        <div className="flex flex-col gap-1 bg-gray-50 rounded-md p-3 ">
+          <span className="font-semibold text-gray-800">
+            {student.student.firstname} {student.student.lastname}
+            </span>
           <Small text={`${student?.grade ?? "-"}° Grado — Sección ${student?.section ?? "-"}`} />
         </div>
 
