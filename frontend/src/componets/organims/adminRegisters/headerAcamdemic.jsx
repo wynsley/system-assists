@@ -9,12 +9,14 @@ import { ModalCreateClassroom } from "../../modals/adminRegisters/ModalCreateCla
 import { ModalCreatePeriod } from "../../modals/modalCreatePeriod";
 
 import { useModal } from "../../../hooks/hookModal/useModal";
+import { ModalCreateIncidentCatalog } from "../../modals/adminRegisters/modalCreateIncidentCatalog";
 
 function HeaderAcademic({
   refetchGrades,
   refethcSections,
   refetchClassroom,
-  refetchPeriods
+  refetchPeriods,
+  refetchIncidentCatalog
 }) {
   //hooks modals
   const modalMangAcademy = useModal();
@@ -22,6 +24,7 @@ function HeaderAcademic({
   const modalSection = useModal();
   const modalClassroom = useModal();
   const modalPeriod = useModal()
+  const modalIncidentCatalog = useModal()
 
   return (
     <section
@@ -68,6 +71,10 @@ function HeaderAcademic({
             modalMangAcademy.closeModal();
             modalPeriod.openModal();
           }}
+          openIncidentCatalog={() => {
+            modalMangAcademy.closeModal();
+            modalIncidentCatalog.openModal();
+          }}
         />
       )}
       
@@ -96,6 +103,12 @@ function HeaderAcademic({
         <ModalCreatePeriod 
           closeModal={modalPeriod.closeModal}
           onSuccess={refetchPeriods}
+        />
+      )}
+      {modalIncidentCatalog.isOpen && (
+        <ModalCreateIncidentCatalog
+          closeModal={modalIncidentCatalog.closeModal}
+          onSuccess={refetchIncidentCatalog}
         />
       )}
     </section>

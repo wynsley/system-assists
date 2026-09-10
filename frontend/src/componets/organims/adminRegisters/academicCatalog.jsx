@@ -16,6 +16,7 @@ import { GradeAndSeccions } from "./listGradesAndSections";
 import { Paginations } from "../../molecules/adminRegisters/Paginations";
 import { Filters } from "../../molecules/adminRegisters/filters";
 import { AcademicPeriods } from "./academicPeriod";
+import { IncidentCatalogList } from "./incidentCatalogList";
 
 function AcademicCatalog({
   classroomHook,
@@ -30,12 +31,15 @@ function AcademicCatalog({
   setGradeFilter,
   sectionFilter,
   setSectionFilter,
+  incidentCatalogHook
 }) {
   // HOOKS
   const [editingClassroom, setEditingClassroom] = useState(null);
   const [editingPeriod, setEditingPeriod] = useState(null);
   const editPeriodModal = useModal();
   const editClassroomModal = useModal();
+  const [editingIncidentType, setEditingIncidentType] = useState(null);
+  const editIncidentTypeModal = useModal();
 
   const { showToast } = useToast();
   const {
@@ -51,6 +55,14 @@ function AcademicCatalog({
     deletePeriod,
     refetch: refetchPeriods,
   } = periodsHook;
+
+  //hook de catalogo de incidentes
+  const {
+    catalog: incidentCatalog,
+    loading: loadingIncidentCatalog,
+    deleteIncidentType,
+    refetch: refetchIncidentCatalog,
+  } = incidentCatalogHook;
 
   // DATA DEL HOOK
   const {
@@ -185,6 +197,12 @@ function AcademicCatalog({
     editPeriodModal.openModal();
   };
 
+  //EDITAR INCIDENTCATALOG
+    const handleEditType = (item) => {
+    setEditingIncidentType(item);
+    editIncidentTypeModal.openModal();
+  };
+
   //ELIMINAR PERIODO
   const handleDeletePeriod = (period) => {
     confirm({
@@ -196,6 +214,22 @@ function AcademicCatalog({
           showToast("Bimestre eliminado correctamente", "success");
         } catch (error) {
           showToast(error.message || "No se pudo eliminar el bimestre", "error");
+        }
+      },
+    });
+  };
+
+  //ELIMINAR UN INCIDENTCATALOG
+  const handleDeleteType = (item) => {
+    confirm({
+      title: `¿Eliminar "${item.name}"?`,
+      description: "Esta acción no se puede deshacer.",
+      onConfirm: async () => {
+        try {
+          await deleteIncidentType(item.idIncidentCatalog);
+          showToast("Tipo de incidente eliminado correctamente", "success");
+        } catch (error) {
+          showToast(error.message || "No se pudo eliminar el tipo de incidente", "error");
         }
       },
     });
@@ -358,6 +392,12 @@ function AcademicCatalog({
         handleEditPeriod={handleEditPeriod}
         handleDeletePeriod={handleDeletePeriod}
       />
+      <IncidentCatalogList
+        loadingCatalog={loadingIncidentCatalog}
+        catalog={incidentCatalog}
+        handleEditType={handleEditType}
+        handleDeleteType={handleDeleteType}
+      />
 
       {/* MODAL EDITAR AULA*/}
       {editClassroomModal.isOpen &&
@@ -382,6 +422,15 @@ function AcademicCatalog({
           initialData={editingPeriod}
           closeModal={editPeriodModal.closeModal}
           onSuccess={refetchPeriods}
+        />
+      )}
+      {/* MODAL INCIDENTCATALOG*/}
+      {editIncidentTypeModal.isOpen && editingIncidentType && (
+        <ModalCreateIncidentCatalog
+          mode="edit"
+          initialData={editingIncidentType}
+          closeModal={editIncidentTypeModal.closeModal}
+          onSuccess={refetchIncidentCatalog}
         />
       )}
       {/* MODAL CONFIRMACIÓN*/}

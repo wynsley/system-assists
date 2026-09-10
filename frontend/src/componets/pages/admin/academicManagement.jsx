@@ -7,6 +7,7 @@ import { HeaderAcademic } from "../../organims/adminRegisters/headerAcamdemic"
 import { MyTemplate } from "../../templates/myTemplate"
 import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
 import { useAcademicPeriod } from "../../../hooks/hoocksAdmin/useAcademicPeriod";
+import { useIncidentCatalog } from "../../../hooks/hooksAssistant/useIncidentCatalog";
 
 function AcademicManagement() {
 
@@ -30,6 +31,7 @@ function AcademicManagement() {
     search: debouncedSearch || undefined
   })
   const periodsHook = useAcademicPeriod();
+  const incidentCatalogHook = useIncidentCatalog();
 
   return (
     <MyTemplate >
@@ -38,6 +40,7 @@ function AcademicManagement() {
         refethcSections={sectionsHook.refetch}
         refetchClassroom={classroomHook.refetch}
         refetchPeriods={periodsHook.refetch}
+        refetchIncidentCatalog={incidentCatalogHook.refetch}
       />
       <hr className="w-[96%] md:w-[90%] md:max-w-7xl mx-auto text-gray-400 rounded-full mt-1" />
       <AcademicCatalog
@@ -55,6 +58,7 @@ function AcademicManagement() {
         setGradeFilter={setGradeFilter}
         sectionFilter={sectionFilter}
         setSectionFilter={setSectionFilter}
+        incidentCatalogHook={incidentCatalogHook}
       />
     </MyTemplate>
   )
