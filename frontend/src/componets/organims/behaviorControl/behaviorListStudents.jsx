@@ -20,7 +20,7 @@ function BehaviorListStudents({
   selectedPeriod,
   setSelectedPeriod,
   isFetching,
-  refechBehavior
+  refechtBehavior
 }) {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [modalType, setModalType] = useState(null);
@@ -115,7 +115,7 @@ function BehaviorListStudents({
           closeModal={closeModal}
           student={selectedStudent}
           createIncident={createIncident}
-          refechBehavior ={refechBehavior}
+          refechtBehavior ={refechtBehavior}
         />
       )}
     </section>

@@ -23,6 +23,13 @@ classroomStudentRoutes.get(
 );
 
 classroomStudentRoutes.get(
+  "/roster",
+  authMiddleware,
+  authMiddlewareRole(["ADMIN", "AUXILIAR"]),
+  classroomStudentController.getRosterByClassroomPage,
+);
+
+classroomStudentRoutes.get(
   "/:id",
   authMiddleware,
   authMiddlewareRole(["ADMIN", "AUXILIAR", "PARENT"]),

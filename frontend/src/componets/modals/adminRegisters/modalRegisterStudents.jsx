@@ -197,7 +197,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
 
         if (classroomChanged) {
           const { ok: okCS, data: dataCS } = await apiFetch(
-            "/classroom-student",
+            "/classroom-student/assign",
             "POST",
             { idClassroom: Number(idClassroom), idStudent }
           );

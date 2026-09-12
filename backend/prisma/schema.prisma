@@ -122,6 +122,7 @@ model Classroom {
   year        Int
   idSection   Int
   status      StatusClassroom
+  sortOrder   Int
 
   section            Section             @relation(fields: [idSection], references: [idSection])
   classroomStudents  ClassroomStudent[]
@@ -130,6 +131,7 @@ model Classroom {
   @@unique([year, idSection])
   @@index([idSection])
   @@index([year])
+  @@index([status, sortOrder])
 }
 
 model ClassroomAuxiliar {
@@ -146,7 +148,7 @@ model ClassroomAuxiliar {
 model ClassroomStudent {
   idClassroomStudent Int @id @default(autoincrement())
   idClassroom        Int
-  idStudent          Int
+  idStudent          Int @unique  
 
   classroom Classroom @relation(fields: [idClassroom], references: [idClassroom])
   student   Student   @relation(fields: [idStudent], references: [idStudent])

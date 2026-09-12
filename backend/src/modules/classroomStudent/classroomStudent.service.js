@@ -3,32 +3,68 @@ import { AppError } from "../../utils/AppError.js";
 import { mappersUtils } from "../../utils/mappers.utils.js";
 import { searchUtils } from "../../utils/search.utils.js";
 import { validateUtils } from "../../utils/validate.utils.js";
+import { academicPeriodService } from "../academicPeriod/academicPeriod.service.js";
 import { classroomStudentFields } from "./classroomStudent.fields.js";
+import { getRosterByClassroomPage } from "./classroomStudent.roster.js";
 
 const classroomStudentService = {
-  create: async ({ idClassroom, idStudent }) => {
-    const classroomStudent = await prisma.classroomStudent.findFirst({
-      where: { idClassroom, idStudent },
-      select: classroomStudentFields.create,
-    });
-
-    if (classroomStudent) {
-      throw new AppError("Registro duplicado", 409, [
-        {
-          field: ["idClassroom", "idStudent"],
-          message: "Ya existe un registro con este valor",
-        },
-      ]);
-    }
-
-    const queryResult = await prisma.$transaction(async (prisma) => {
-      const classroomStudent = await prisma.classroomStudent.create({
-        data: { idClassroom, idStudent },
-        select: classroomStudentFields.create,
+  _assign: async ({ idStudent, idClassroom }) => {
+    return await prisma.$transaction(async (prisma) => {
+      const existing = await prisma.classroomStudent.findUnique({
+        where: { idStudent },
+        include: { classroom: { include: { classroomAuxiliars: true } } },
       });
-      return { classroomStudent };
+
+      const newClassroom = await prisma.classroom.findUnique({
+        where: { idClassroom },
+        include: { classroomAuxiliars: true },
+      });
+      if (!newClassroom) {
+        throw new AppError("Registro no encontrado", 404, [
+          { field: "idClassroom", message: "El aula indicada no existe" },
+        ]);
+      }
+
+      let classroomStudent;
+
+      if (existing) {
+        if (existing.idClassroom === idClassroom) {
+          return mappersUtils.formatClassroomStudent(existing);
+        }
+
+        const oldAuxiliarIds = existing.classroom.classroomAuxiliars.map((a) => a.idAuxiliar).sort();
+        const newAuxiliarIds = newClassroom.classroomAuxiliars.map((a) => a.idAuxiliar).sort();
+        const sameAuxiliar = JSON.stringify(oldAuxiliarIds) === JSON.stringify(newAuxiliarIds);
+
+        classroomStudent = await prisma.classroomStudent.update({
+          where: { idStudent },
+          data: { idClassroom },
+          select: classroomStudentFields.select,
+        });
+
+        if (!sameAuxiliar) {
+          const period = await academicPeriodService.getCurrent().catch(() => null);
+          if (period) {
+            await prisma.behavior.updateMany({
+              where: { idStudent, idPeriod: period.idPeriod },
+              data: { score: 0 },
+            });
+          }
+        }
+      } else {
+        classroomStudent = await prisma.classroomStudent.create({
+          data: { idClassroom, idStudent },
+          select: classroomStudentFields.select,
+        });
+      }
+
+      return mappersUtils.formatClassroomStudent(classroomStudent);
     });
-    return mappersUtils.formatClassroomStudent(queryResult.classroomStudent);
+  },
+
+  //Create
+  assignClassroom: async ({ idStudent, idClassroom }) => {
+    return classroomStudentService._assign({ idStudent, idClassroom });
   },
 
   get: async ({
@@ -73,23 +109,32 @@ const classroomStudentService = {
     return [classroomStudents.map(mappersUtils.formatClassroomStudent), total];
   },
 
+  getRosterByClassroomPage: async ({ page, year, grade, section }) => {
+    return getRosterByClassroomPage({ page, year, grade, section });
+  },
+
   update: async ({ idClassroomStudent, data }) => {
+    if (data.idClassroom) {
+      const current = await prisma.classroomStudent.findUnique({
+        where: { idClassroomStudent },
+        select: { idStudent: true },
+      });
+      if (!current) {
+        throw new AppError("Registro no encontrado", 404, [
+          { field: "idClassroomStudent", message: "No existe un registro con el ID proporcionado" },
+        ]);
+      }
+      return classroomStudentService._assign({
+        idStudent: current.idStudent,
+        idClassroom: data.idClassroom,
+      });
+    }
+
     const updatedUser = await prisma.classroomStudent.update({
-      where: {
-        idClassroomStudent,
-      },
+      where: { idClassroomStudent },
       data,
       select: classroomStudentFields.select,
     });
-
-    if (!updatedUser) {
-      throw new AppError("Registro no encontrado", 404, [
-        {
-          field: "idClassroomStudent",
-          message: "No existe un registro con el ID proporcionado",
-        },
-      ]);
-    }
 
     return mappersUtils.formatClassroomStudent(updatedUser);
   },

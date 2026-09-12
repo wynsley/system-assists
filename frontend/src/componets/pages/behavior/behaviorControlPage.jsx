@@ -36,7 +36,7 @@ function BehaviorControlPage() {
     calificar,
     isFetching,
     message,
-    refetch: refechBehavior
+    refetch: refechtBehavior
   } = useBehavior({
     fetchBehavior: true,
     fetchRoster: true,
@@ -110,7 +110,7 @@ function BehaviorControlPage() {
         selectedPeriod={selectedPeriod}
         setSelectedPeriod={setSelectedPeriod}
         isFetching={isFetching}
-        refechBehavior = {refechBehavior}
+        refechtBehavior = {refechtBehavior}
       />
         
       <BehaviorRecords

@@ -10,7 +10,7 @@ const classroomStudentController = {
         data: req.body,
       });
 
-      const queryResult = await classroomStudentService.create(validate);
+      const queryResult = await classroomStudentService.assignClassroom(validate);
 
       return res.json({
         success: true,
@@ -41,6 +41,27 @@ const classroomStudentController = {
           total,
           totalPages: Math.ceil(total / validate.limit),
         },
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  getRosterByClassroomPage: async (req, res, next) => {
+    try {
+      const validate = await validateUtils.validateSchema({
+        schema: classroomStudentSchema.roster,
+        data: req.query,
+      });
+
+      const { classroom, students, pagination } =
+        await classroomStudentService.getRosterByClassroomPage(validate);
+
+      return res.json({
+        success: true,
+        classroom,
+        data: students,
+        pagination,
       });
     } catch (error) {
       next(error);
