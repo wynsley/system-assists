@@ -11,11 +11,10 @@ const randomDni = () => String(Math.floor(10000000 + Math.random() * 90000000));
 const randomPhone = () =>
   "9" + String(Math.floor(10000000 + Math.random() * 90000000));
 
-/** Genera una fecha aleatoria dentro de los últimos N días hábiles */
+/** Genera una fecha aleatoria dentro de los últimos N días, evitando fines de semana */
 const randomRecentDate = (daysBack = 30) => {
   const date = new Date();
   date.setDate(date.getDate() - Math.floor(Math.random() * daysBack));
-  // Evitar fines de semana
   const day = date.getDay();
   if (day === 0) date.setDate(date.getDate() - 2);
   if (day === 6) date.setDate(date.getDate() - 1);
@@ -62,39 +61,54 @@ const ATTENDANCE_STATUSES = [
   "JUSTIFICADA",
 ];
 
-// Catálogo de incidencias con sus tipos y puntos
+const BEHAVIOR_BASELINE_SCORE = 100;
+
+// Catálogo de incidencias — ahora usa IncidentPolarity (POSITIVO/NEGATIVO) y "points"
 const INCIDENT_CATALOG_DATA = [
-  // LEVE
-  { name: "Falta de uniforme", description: "El estudiante no porta el uniforme reglamentario.", type: "LEVE", pointsDeducted: 2 },
-  { name: "Tardanza reiterada", description: "El estudiante llega tarde más de tres veces en la semana.", type: "LEVE", pointsDeducted: 3 },
-  { name: "Uso de celular en clase", description: "El estudiante usa el teléfono celular durante la clase sin autorización.", type: "LEVE", pointsDeducted: 2 },
-  { name: "Desorden en el aula", description: "El estudiante genera desorden e interrumpe el dictado de clases.", type: "LEVE", pointsDeducted: 2 },
-  { name: "No presentó tareas", description: "El estudiante no entregó las tareas asignadas.", type: "LEVE", pointsDeducted: 1 },
-  // GRAVE
-  { name: "Agresión verbal", description: "El estudiante insultó o amenazó verbalmente a un compañero o docente.", type: "GRAVE", pointsDeducted: 8 },
-  { name: "Daño a la propiedad escolar", description: "El estudiante dañó mobiliario o infraestructura del colegio.", type: "GRAVE", pointsDeducted: 10 },
-  { name: "Copia en examen", description: "El estudiante fue sorprendido copiando durante una evaluación.", type: "GRAVE", pointsDeducted: 7 },
-  { name: "Falsificación de firma", description: "El estudiante falsificó la firma de un apoderado en documentos escolares.", type: "GRAVE", pointsDeducted: 10 },
-  // MUY_GRAVE
-  { name: "Agresión física", description: "El estudiante agredió físicamente a un compañero o personal del colegio.", type: "MUY_GRAVE", pointsDeducted: 20 },
-  { name: "Posesión de sustancias prohibidas", description: "El estudiante portaba sustancias prohibidas dentro del colegio.", type: "MUY_GRAVE", pointsDeducted: 25 },
-  { name: "Acoso escolar", description: "El estudiante realizó actos de bullying de forma sistemática.", type: "MUY_GRAVE", pointsDeducted: 20 },
+  // NEGATIVO - leves
+  { name: "Falta de uniforme", description: "El estudiante no porta el uniforme reglamentario.", type: "NEGATIVO", points: 2 },
+  { name: "Tardanza reiterada", description: "El estudiante llega tarde más de tres veces en la semana.", type: "NEGATIVO", points: 3 },
+  { name: "Uso de celular en clase", description: "El estudiante usa el teléfono celular durante la clase sin autorización.", type: "NEGATIVO", points: 2 },
+  { name: "Desorden en el aula", description: "El estudiante genera desorden e interrumpe el dictado de clases.", type: "NEGATIVO", points: 2 },
+  { name: "No presentó tareas", description: "El estudiante no entregó las tareas asignadas.", type: "NEGATIVO", points: 1 },
+  // NEGATIVO - graves
+  { name: "Agresión verbal", description: "El estudiante insultó o amenazó verbalmente a un compañero o docente.", type: "NEGATIVO", points: 8 },
+  { name: "Daño a la propiedad escolar", description: "El estudiante dañó mobiliario o infraestructura del colegio.", type: "NEGATIVO", points: 10 },
+  { name: "Copia en examen", description: "El estudiante fue sorprendido copiando durante una evaluación.", type: "NEGATIVO", points: 7 },
+  { name: "Falsificación de firma", description: "El estudiante falsificó la firma de un apoderado en documentos escolares.", type: "NEGATIVO", points: 10 },
+  // NEGATIVO - muy graves
+  { name: "Agresión física", description: "El estudiante agredió físicamente a un compañero o personal del colegio.", type: "NEGATIVO", points: 20 },
+  { name: "Posesión de sustancias prohibidas", description: "El estudiante portaba sustancias prohibidas dentro del colegio.", type: "NEGATIVO", points: 25 },
+  { name: "Acoso escolar", description: "El estudiante realizó actos de bullying de forma sistemática.", type: "NEGATIVO", points: 20 },
+  // POSITIVO
+  { name: "Participación destacada", description: "El estudiante participó activamente y de forma destacada en clase.", type: "POSITIVO", points: 3 },
+  { name: "Ayuda a un compañero", description: "El estudiante ayudó de forma voluntaria a un compañero con dificultades.", type: "POSITIVO", points: 2 },
+  { name: "Trabajo en equipo ejemplar", description: "El estudiante mostró un desempeño ejemplar trabajando en equipo.", type: "POSITIVO", points: 3 },
+  { name: "Puntualidad sobresaliente", description: "El estudiante mantuvo puntualidad sobresaliente durante el periodo.", type: "POSITIVO", points: 2 },
 ];
 
 // ─── Generadores ────────────────────────────────────────────────────────────
 
+const normalize = (s) =>
+  s.toLowerCase().replace(
+    /[áéíóúñ]/g,
+    (c) => ({ á: "a", é: "e", í: "i", ó: "o", ú: "u", ñ: "n" })[c] || c,
+  );
+
 const genEmail = (firstname, lastname, suffix = "") =>
-  `${firstname
-    .toLowerCase()
-    .replace(
-      /[áéíóúñ]/g,
-      (c) => ({ á: "a", é: "e", í: "i", ó: "o", ú: "u", ñ: "n" })[c] || c,
-    )}.${lastname
-    .toLowerCase()
-    .replace(
-      /[áéíóúñ]/g,
-      (c) => ({ á: "a", é: "e", í: "i", ó: "o", ú: "u", ñ: "n" })[c] || c,
-    )}${suffix}@school.edu.pe`;
+  `${normalize(firstname)}.${normalize(lastname)}${suffix}@school.edu.pe`;
+
+/** Construye los 4 bimestres del año dado (fechas aproximadas del calendario escolar peruano) */
+const buildAcademicPeriods = (year) => [
+  { year, bimester: 1, startDate: new Date(`${year}-03-01`), endDate: new Date(`${year}-05-15`) },
+  { year, bimester: 2, startDate: new Date(`${year}-05-16`), endDate: new Date(`${year}-07-31`) },
+  { year, bimester: 3, startDate: new Date(`${year}-08-01`), endDate: new Date(`${year}-10-15`) },
+  { year, bimester: 4, startDate: new Date(`${year}-10-16`), endDate: new Date(`${year}-12-20`) },
+];
+
+/** Encuentra el AcademicPeriod (ya persistido) que contiene una fecha dada */
+const findPeriodForDate = (periods, date) =>
+  periods.find((p) => date >= p.startDate && date <= p.endDate);
 
 // ─── Seed principal ──────────────────────────────────────────────────────────
 
@@ -141,6 +155,11 @@ const seed = async () => {
   const classrooms = [];
 
   for (const section of sections) {
+    // sortOrder determinístico: grado * 10 + índice de sección (A=1, B=2, C=3, D=4)
+    const grade = grades.find((g) => g.idGrade === section.idGrade);
+    const sectionIndex = SECTION_NAMES.indexOf(section.name) + 1;
+    const sortOrder = grade.level * 10 + sectionIndex;
+
     for (const year of years) {
       const existing = await prisma.classroom.findUnique({
         where: { year_idSection: { year, idSection: section.idSection } },
@@ -152,6 +171,7 @@ const seed = async () => {
               year,
               idSection: section.idSection,
               status: year === currentYear ? "ACTIVO" : "INACTIVO",
+              sortOrder,
             },
           });
       classrooms.push(classroom);
@@ -162,19 +182,19 @@ const seed = async () => {
   // ── 4. Auxiliares ──────────────────────────────────────────────────────────
   console.log("\n👩‍🏫 Creando auxiliares...");
   const auxiliarData = [
-    { firstname: "Elena",    lastname: "Torres",  suffix: "" },
-    { firstname: "Roberto",  lastname: "Vargas",  suffix: "" },
-    { firstname: "Patricia", lastname: "Mendoza", suffix: "" },
-    { firstname: "Sergio",   lastname: "Quispe",  suffix: "" },
-    { firstname: "Claudia",  lastname: "Ramos",   suffix: "" },
-    { firstname: "Marco",    lastname: "Paredes", suffix: "" },
-    { firstname: "Liliana",  lastname: "Castro",  suffix: "" },
-    { firstname: "Javier",   lastname: "Huanca",  suffix: "" },
+    { firstname: "Elena", lastname: "Torres" },
+    { firstname: "Roberto", lastname: "Vargas" },
+    { firstname: "Patricia", lastname: "Mendoza" },
+    { firstname: "Sergio", lastname: "Quispe" },
+    { firstname: "Claudia", lastname: "Ramos" },
+    { firstname: "Marco", lastname: "Paredes" },
+    { firstname: "Liliana", lastname: "Castro" },
+    { firstname: "Javier", lastname: "Huanca" },
   ];
 
   const auxiliares = [];
   for (const aux of auxiliarData) {
-    const email = genEmail(aux.firstname, aux.lastname, aux.suffix);
+    const email = genEmail(aux.firstname, aux.lastname);
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       auxiliares.push(existing);
@@ -195,7 +215,27 @@ const seed = async () => {
     console.log(`  ✔ Auxiliar creado: ${aux.firstname} ${aux.lastname}`);
   }
 
-  // ── 5. Padres ──────────────────────────────────────────────────────────────
+  // ── 5. ClassroomAuxiliar ───────────────────────────────────────────────────
+  console.log("\n🔗 Asignando auxiliares a aulas activas...");
+  const activeClassroomsForAux = classrooms.filter((c) => c.status === "ACTIVO");
+  let caCount = 0;
+  for (const classroom of activeClassroomsForAux) {
+    const numAux = Math.random() > 0.6 ? 2 : 1;
+    const shuffledAux = [...auxiliares].sort(() => Math.random() - 0.5).slice(0, numAux);
+    for (const aux of shuffledAux) {
+      try {
+        await prisma.classroomAuxiliar.create({
+          data: { idClassroom: classroom.idClassroom, idAuxiliar: aux.idUser },
+        });
+        caCount++;
+      } catch {
+        // duplicado, ignorar
+      }
+    }
+  }
+  console.log(`  ✔ ${caCount} asignaciones aula-auxiliar creadas`);
+
+  // ── 6. Padres ──────────────────────────────────────────────────────────────
   console.log("\n👨‍👩‍👧 Creando padres/apoderados...");
   const parentPool = [];
   const usedEmails = new Set();
@@ -234,7 +274,7 @@ const seed = async () => {
   }
   console.log(`  ✔ ${parentPool.length} padres/apoderados creados`);
 
-  // ── 6. Estudiantes ─────────────────────────────────────────────────────────
+  // ── 7. Estudiantes ─────────────────────────────────────────────────────────
   console.log("\n🎒 Creando estudiantes...");
   const students = [];
   const usedDnis = new Set();
@@ -296,7 +336,7 @@ const seed = async () => {
   }
   console.log(`  ✔ ${students.length} estudiantes creados`);
 
-  // ── 7. StudentParent ───────────────────────────────────────────────────────
+  // ── 8. StudentParent ───────────────────────────────────────────────────────
   console.log("\n🔗 Vinculando estudiantes con padres...");
   let spCount = 0;
   for (const student of students) {
@@ -304,7 +344,7 @@ const seed = async () => {
     const shuffled = [...parentPool].sort(() => Math.random() - 0.5);
     const chosen = shuffled.slice(0, numParents);
     const usedParentIds = new Set();
-    
+
     for (const parent of chosen) {
       if (usedParentIds.has(parent.idUser)) continue;
       usedParentIds.add(parent.idUser);
@@ -324,10 +364,11 @@ const seed = async () => {
   }
   console.log(`  ✔ ${spCount} relaciones estudiante-apoderado creadas`);
 
-  // ── 8. ClassroomStudent ────────────────────────────────────────────────────
+  // ── 9. ClassroomStudent ────────────────────────────────────────────────────
   console.log("\n📋 Matriculando estudiantes en aulas...");
 
   const activeClassrooms = classrooms.filter((c) => c.status === "ACTIVO");
+  const oldClassrooms = classrooms.filter((c) => c.status === "INACTIVO");
   let csCount = 0;
 
   const shuffledStudents = [...students].sort(() => Math.random() - 0.5);
@@ -345,12 +386,11 @@ const seed = async () => {
         });
         csCount++;
       } catch {
-        // duplicado, ignorar
+        // duplicado, ignorar (ClassroomStudent.idStudent es @unique)
       }
     }
   }
 
-  const oldClassrooms = classrooms.filter((c) => c.status === "INACTIVO");
   for (const classroom of oldClassrooms) {
     const classSize = Math.floor(Math.random() * 3) + 3;
     for (let k = 0; k < classSize && idx < shuffledStudents.length; k++, idx++) {
@@ -369,7 +409,7 @@ const seed = async () => {
   }
   console.log(`  ✔ ${csCount} matrículas creadas`);
 
-  // ── 9. Catálogo de incidencias ─────────────────────────────────────────────
+  // ── 10. Catálogo de incidencias ─────────────────────────────────────────────
   console.log("\n📖 Creando catálogo de incidencias...");
   const incidentCatalog = [];
   for (const item of INCIDENT_CATALOG_DATA) {
@@ -380,28 +420,40 @@ const seed = async () => {
         name: item.name,
         description: item.description,
         type: item.type,
-        pointsDeducted: item.pointsDeducted,
+        points: item.points,
       },
     });
     incidentCatalog.push(catalog);
-    console.log(`  ✔ ${catalog.type} - ${catalog.name}`);
+    console.log(`  ✔ ${catalog.type} - ${catalog.name} (${catalog.points} pts)`);
   }
 
-  // ── 10. Asistencias ────────────────────────────────────────────────────────
+  // ── 11. Periodos académicos ──────────────────────────────────────────────────
+  console.log("\n🗓️  Creando periodos académicos...");
+  const periods = [];
+  for (const year of years) {
+    for (const p of buildAcademicPeriods(year)) {
+      const period = await prisma.academicPeriod.upsert({
+        where: { year_bimester: { year: p.year, bimester: p.bimester } },
+        update: {},
+        create: p,
+      });
+      periods.push(period);
+    }
+  }
+  console.log(`  ✔ ${periods.length} periodos académicos creados`);
+
+  // ── 12. Asistencias ────────────────────────────────────────────────────────
   console.log("\n📅 Creando asistencias...");
 
-  // Solo estudiantes activos en aulas activas
   const activeStudents = students.filter((s) => s.status === "ACTIVO");
   let attCount = 0;
 
-  // Generar ~3 registros por estudiante activo en fechas distintas
   for (const student of activeStudents) {
     const numRecords = Math.floor(Math.random() * 3) + 2; // 2 a 4 registros
     const usedDates = new Set();
 
     for (let r = 0; r < numRecords; r++) {
       let date = randomRecentDate(45);
-      // Garantizar fecha única por estudiante
       let attempts = 0;
       while (usedDates.has(date.toISOString()) && attempts < 10) {
         date = randomRecentDate(45);
@@ -437,9 +489,39 @@ const seed = async () => {
   }
   console.log(`  ✔ ${attCount} registros de asistencia creados`);
 
-  // ── 11. Incidencias ────────────────────────────────────────────────────────
+  // ── 13. Behavior (línea base por estudiante activo y periodo actual) ────────
+  console.log("\n📊 Creando comportamiento base (Behavior)...");
+  const currentPeriod =
+    findPeriodForDate(periods, new Date()) ||
+    periods.find((p) => p.year === currentYear) ||
+    periods[0];
+
+  const behaviorByStudent = new Map(); // idStudent -> Behavior
+  let behCount = 0;
+  for (const student of activeStudents) {
+    const behavior = await prisma.behavior.upsert({
+      where: {
+        idStudent_idPeriod: {
+          idStudent: student.idStudent,
+          idPeriod: currentPeriod.idPeriod,
+        },
+      },
+      update: {},
+      create: {
+        idStudent: student.idStudent,
+        idPeriod: currentPeriod.idPeriod,
+        score: BEHAVIOR_BASELINE_SCORE,
+      },
+    });
+    behaviorByStudent.set(student.idStudent, behavior);
+    behCount++;
+  }
+  console.log(`  ✔ ${behCount} registros de comportamiento base creados (periodo ${currentPeriod.bimester}/${currentPeriod.year})`);
+
+  // ── 14. Incidencias + BehaviorHistory ────────────────────────────────────────
   console.log("\n⚠️  Creando incidencias...");
   let incCount = 0;
+  let bhCount = 0;
 
   // ~30% de los estudiantes activos tienen al menos una incidencia
   const studentsWithIncidents = activeStudents
@@ -459,14 +541,16 @@ const seed = async () => {
 
       const auxiliar = randomItem(auxiliares);
       const note =
-        catalog.type === "MUY_GRAVE"
+        catalog.type === "NEGATIVO" && catalog.points >= 15
           ? "Se notificó a los apoderados y se derivó a dirección."
-          : catalog.type === "GRAVE"
+          : catalog.type === "NEGATIVO" && catalog.points >= 5
             ? "Se realizó llamado de atención formal."
-            : null;
+            : catalog.type === "POSITIVO"
+              ? "Reconocimiento registrado en el expediente del estudiante."
+              : null;
 
       try {
-        await prisma.incident.create({
+        const incident = await prisma.incident.create({
           data: {
             date,
             note,
@@ -476,26 +560,77 @@ const seed = async () => {
           },
         });
         incCount++;
+
+        // Actualiza el Behavior del periodo correspondiente a la fecha del incidente
+        const period = findPeriodForDate(periods, date) || currentPeriod;
+        let behavior = behaviorByStudent.get(student.idStudent);
+
+        // Si el incidente cae en un periodo distinto al que ya tenemos cacheado, buscamos/creamos ese Behavior
+        if (!behavior || behavior.idPeriod !== period.idPeriod) {
+          behavior = await prisma.behavior.upsert({
+            where: {
+              idStudent_idPeriod: {
+                idStudent: student.idStudent,
+                idPeriod: period.idPeriod,
+              },
+            },
+            update: {},
+            create: {
+              idStudent: student.idStudent,
+              idPeriod: period.idPeriod,
+              score: BEHAVIOR_BASELINE_SCORE,
+            },
+          });
+        }
+
+        const previousScore = behavior.score;
+        const delta = catalog.type === "POSITIVO" ? catalog.points : -catalog.points;
+        const newScore = previousScore + delta;
+
+        const updatedBehavior = await prisma.behavior.update({
+          where: { idBehavior: behavior.idBehavior },
+          data: { score: newScore },
+        });
+        behaviorByStudent.set(student.idStudent, updatedBehavior);
+
+        await prisma.behaviorHistory.create({
+          data: {
+            idBehavior: updatedBehavior.idBehavior,
+            previousScore,
+            newScore,
+            description: `${catalog.type === "POSITIVO" ? "+" : "-"}${catalog.points} pts por: ${catalog.name}`,
+            idAuxiliar: auxiliar.idUser,
+            type: "INCIDENTE",
+            idIncident: incident.idIncident,
+            date,
+          },
+        });
+        bhCount++;
       } catch {
         // @@unique duplicado, ignorar
       }
     }
   }
   console.log(`  ✔ ${incCount} incidencias creadas`);
+  console.log(`  ✔ ${bhCount} registros de historial de comportamiento creados`);
 
   // ─── Resumen ────────────────────────────────────────────────────────────────
   console.log("\n✅ Seed completado:");
-  console.log(`   Grados:              ${grades.length}`);
-  console.log(`   Secciones:           ${sections.length}`);
-  console.log(`   Aulas:               ${classrooms.length}`);
-  console.log(`   Auxiliares:          ${auxiliares.length}`);
-  console.log(`   Padres:              ${parentPool.length}`);
-  console.log(`   Estudiantes:         ${students.length}`);
-  console.log(`   Vínculos padre:      ${spCount}`);
-  console.log(`   Matrículas:          ${csCount}`);
-  console.log(`   Catálogo incid.:     ${incidentCatalog.length}`);
-  console.log(`   Asistencias:         ${attCount}`);
-  console.log(`   Incidencias:         ${incCount}`);
+  console.log(`   Grados:                 ${grades.length}`);
+  console.log(`   Secciones:              ${sections.length}`);
+  console.log(`   Aulas:                  ${classrooms.length}`);
+  console.log(`   Auxiliares:             ${auxiliares.length}`);
+  console.log(`   Aula-Auxiliar:          ${caCount}`);
+  console.log(`   Padres:                 ${parentPool.length}`);
+  console.log(`   Estudiantes:            ${students.length}`);
+  console.log(`   Vínculos padre:         ${spCount}`);
+  console.log(`   Matrículas:             ${csCount}`);
+  console.log(`   Catálogo incid.:        ${incidentCatalog.length}`);
+  console.log(`   Periodos académicos:    ${periods.length}`);
+  console.log(`   Asistencias:            ${attCount}`);
+  console.log(`   Behavior base:          ${behCount}`);
+  console.log(`   Incidencias:            ${incCount}`);
+  console.log(`   Historial comport.:     ${bhCount}`);
 };
 
 seed()
