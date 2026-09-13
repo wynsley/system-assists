@@ -12,7 +12,7 @@ function useClassroomOptions() {
     startLoading();
 
     // limit alto porque son pocas aulas (48 en tu caso), traemos todas de una
-    const { ok, data } = await apiFetch(`/classroom?limit=500&status=ACTIVO`, "GET");
+    const { ok, data } = await apiFetch(`/classroom?limit=50&status=ACTIVO`, "GET");
 
     if (!data || !ok || !data.success) {
       setError(data?.message || "No se pudieron cargar las aulas");
@@ -49,12 +49,13 @@ function useClassroomOptions() {
     () =>
       [...classrooms]
         .sort((a, b) => a.grade - b.grade || a.section.localeCompare(b.section))
-        .map((c) => ({
+        .map((c, index) => ({
           idClassroom: c.idClassroom,
           year: c.year,
           grade: c.grade,
           section: c.section,
           label: `${c.grade}° "${c.section}" - ${c.year}`,
+          pageIndex: index + 1, // <-- posición real dentro del orden, = número de página en el backend
         })),
     [classrooms]
   );
