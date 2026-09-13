@@ -4,12 +4,13 @@ import { useLoading } from "../../../hooks/hookGlobals/useLoading";
 
 function ModalConfirm({
   closeModal,
-  onConfirm,
+  confirm,
   title = "¿Estás seguro?",
   description = "Esta acción no se puede deshacer.",
   confirmText = "Eliminar",
+  loadingText,
   cancelText = "Cancelar",
-  variant = "danger", // "danger" | "warning"
+  variant = "danger", 
 }) {
   const modalRef = useClickOutside(closeModal);
   const { loading, startLoading, stopLoading } = useLoading();
@@ -17,7 +18,7 @@ function ModalConfirm({
   const handleConfirm = async () => {
     startLoading();
     try {
-      await onConfirm();
+      await confirm();
       closeModal();
     } catch {
       stopLoading();
@@ -34,6 +35,14 @@ function ModalConfirm({
       button: "bg-yellow-500 hover:bg-yellow-600 text-white",
     },
   }[variant];
+
+  // si no pasan un loadingText explícito, lo derivamos del confirmText
+  // "Eliminar" -> "Eliminando...", "Reasignar" -> "Reasignando..."
+  const defaultLoadingText = confirmText.endsWith("r")
+    ? `${confirmText.slice(0, -1)}ando...`
+    : `${confirmText}...`;
+
+  const displayLoadingText = loadingText ?? defaultLoadingText;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-[200]">
@@ -77,7 +86,7 @@ function ModalConfirm({
               ${colors.button}
             `}
           >
-            {loading ? "Eliminando..." : confirmText}
+            {loading ? displayLoadingText : confirmText}
           </button>
         </div>
       </div>
