@@ -115,7 +115,7 @@ function BehaviorListStudents({
           closeModal={closeModal}
           student={selectedStudent}
           createIncident={createIncident}
-          refechtBehavior ={refechtBehavior}
+          refetchBehavior={refechtBehavior}
         />
       )}
     </section>

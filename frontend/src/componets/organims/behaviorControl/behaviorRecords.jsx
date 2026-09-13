@@ -36,7 +36,7 @@ function BehaviorRecords({ incidentList = [], selectedDate, setSelectedDate }) {
     <section className="mt-6 w-[96%] md:w-[90%] md:max-w-7xl mx-auto flex flex-col gap-3">
       <Title text={title} level="h3" weight="bold" />
 
-      <div className="flex items-center justify-between gap-3 w-full">
+      <div className="grid grid-cols-2 gap-5">
         <Search 
           search={search} 
           setSearch={setSearch} 
@@ -46,7 +46,8 @@ function BehaviorRecords({ incidentList = [], selectedDate, setSelectedDate }) {
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-auto shrink-0 p-2 rounded-md border border-borderC bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue/20"
+          className="w-[10em] shrink-0 p-2  rounded-md border border-borderC bg-white text-sm 
+          focus:outline-none focus:ring-2 focus:ring-blue/20"
         />
       </div>
 

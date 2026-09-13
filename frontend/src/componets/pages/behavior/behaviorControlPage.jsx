@@ -94,7 +94,8 @@ function BehaviorControlPage() {
         loading={behaviorLoading}
       />
       {message && (
-        <div className="bg-yellow-50 border border-yellow-300 text-yellow-800 rounded-md p-3 text-sm w-[96%] md:w-[90%] md:max-w-7xl mx-auto">
+        <div className="bg-yellow-50 border mt-4 border-yellow-300 text-yellow-800 rounded-md 
+        p-3 text-sm w-[80%] md:w-[70%] md:max-w-7xl mx-auto">
           {message}
         </div>
       )}
