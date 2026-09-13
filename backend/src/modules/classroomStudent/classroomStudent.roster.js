@@ -37,7 +37,10 @@ const getRosterByClassroomPage = async ({ page, year, grade, section, idAuxiliar
   }
 
   const studentsRaw = await prisma.classroomStudent.findMany({
-    where: { idClassroom: classroom.idClassroom },
+    where: {
+      idClassroom: classroom.idClassroom,
+      student: { status: "ACTIVO" }, // <-- solo estudiantes activos
+    },
     select: classroomStudentFields.select,
     orderBy: { student: { lastname: "asc" } },
   });

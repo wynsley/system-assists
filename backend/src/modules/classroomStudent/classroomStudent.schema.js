@@ -22,6 +22,39 @@ const classroomStudentSchema = {
     .strict({
       message: "No se permiten campos adicionales",
     }),
+
+  roster: z
+    .object({
+      page: numericField({
+        label: "La página",
+        min: 1,
+        max: 1000,
+        defaultValue: 1,
+        required: false,
+      }),
+      year: numericField({
+        label: "El año académico",
+        min: 2000,
+        max: 2100,
+        required: false,
+      }),
+      grade: numericField({
+        label: "El grado",
+        min: 1,
+        max: 5,
+        required: false,
+      }),
+      section: z
+        .string()
+        .trim()
+        .min(1, { message: "La sección no puede estar vacía" })
+        .max(10, { message: "La sección no puede exceder 10 caracteres" })
+        .optional(),
+    })
+    .strict({
+      message: "No se permiten campos adicionales",
+    }),
+
   update: z
     .object({
       idClassroom: idField({
