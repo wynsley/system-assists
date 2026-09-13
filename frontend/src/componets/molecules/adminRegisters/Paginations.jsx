@@ -5,9 +5,15 @@ function Paginations({
   total,
   page,
   amount,
-  setPage
+  setPage,
+  hasNextPage,
+  label = "TOTAL"
 }) {
-  const totalUsers = `TOTAL: ${total}`;
+  const totalUsers = `${label}: ${total}`;
+
+  // si no viene hasNextPage, mantiene el comportamiento original (amount.length < 10)
+  const canGoNext = typeof hasNextPage === "boolean" ? hasNextPage : amount.length >= 10;
+
   return (
     <div className="flex justify-between items-center text-sm">
       <Paragraph
@@ -28,7 +34,7 @@ function Paginations({
           text='Siguiente'
           variant="primary"
           type="button"
-          disabled={amount.length < 10}
+          disabled={!canGoNext}
           onClick={() => setPage((p) => p + 1)}
         />
       </div>
