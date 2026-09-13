@@ -9,7 +9,9 @@ import { useLoading } from "../../../hooks/hookGlobals/useLoading"
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useClickOutside } from "../../../hooks/hookModal/useClickOutside"
 import { useClassrooms } from "../../../hooks/hoocksAdmin/useClassroom";
+import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
 import { apiFetch } from "../../../helpers/apiFetch";
+import { ModalConfirm } from "./modalConfirmDelete";
 
 function ModalRegisterStudent({ closeModal, mode = "create", initialData = null, onSuccess }) {
   const isEdit = mode === "edit";
@@ -39,6 +41,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
   const { loading, startLoading, stopLoading } = useLoading()
   const { showToast } = useToast()
   const modalRef = useClickOutside(closeModal)
+  const { config, confirm, closeConfirm } = useConfirm();
   const schema = isEdit ? ValidationUpdateStudent : ValidationCreateStudent;
 
   // Ahora filtramos por año, y subimos el limit para cubrir todas las
@@ -47,6 +50,10 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     limit: 50,
     year: classroomYear || undefined,
   });
+
+  const currentClassroomId = initialData?.classroomStudents?.[0]?.idClassroom
+    ? String(initialData.classroomStudents[0].idClassroom)
+    : null;
 
   const validateField = async (name, value) => {
     try {
@@ -157,16 +164,10 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     ],
   ]
 
-  // ... onSubmit y el resto quedan exactamente igual ...
-
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
+  const doSubmit = async () => {
     const payload = { firstname, lastname, dni, gender, phone, email, status };
 
     try {
-      await schema.validateAsync(payload);
       startLoading();
 
       // PASO 1: crear o editar estudiante
@@ -185,25 +186,19 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
       // PASO 2: asignar o cambiar aula
       if (idClassroom) {
         const idStudent = data.student?.idStudent ?? initialData?.idStudent;
-
         if (!idStudent) throw new Error("No se pudo obtener el ID del estudiante");
-
-        // En edición: solo actuar si el aula cambió
-        const currentClassroomId = initialData?.classroomStudents?.[0]?.idClassroom
-          ? String(initialData.classroomStudents[0].idClassroom)
-          : null;
 
         const classroomChanged = !isEdit || currentClassroomId !== idClassroom;
 
         if (classroomChanged) {
-          const { ok: okCS, data: dataCS } = await apiFetch(
-            "/classroom-student/assign",
+          const { ok: okCS, status: statusCS, data: dataCS } = await apiFetch(
+            "/classroom-student",
             "POST",
             { idClassroom: Number(idClassroom), idStudent }
           );
 
           // 409 en edición = ya está en esa aula, no es error real
-          if (!okCS && dataCS?.message !== "Registro duplicado") {
+          if (!okCS && statusCS !== 409) {
             throw new Error(
               dataCS?.errors?.[0]?.message ||
               dataCS?.message ||
@@ -227,55 +222,104 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     } finally {
       stopLoading();
     }
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    const payload = { firstname, lastname, dni, gender, phone, email, status };
+
+    try {
+      await schema.validateAsync(payload);
+    } catch (err) {
+      setError(err.details ? err.details[0].message : err.message);
+      return;
+    }
+
+    // Si en edición se está cambiando de aula, pedir confirmación explícita antes de guardar
+    const classroomChanged = isEdit && idClassroom && currentClassroomId && currentClassroomId !== idClassroom;
+
+    if (classroomChanged) {
+      const selected = classrooms.find((c) => String(c.idClassroom) === idClassroom);
+      const newLabel = selected
+        ? `${selected.grade}° "${selected.section}" — ${selected.year}`
+        : "la nueva aula";
+
+      const oldClassroomData = initialData?.classroomStudents?.[0];
+      const oldLabel = oldClassroomData
+        ? `${oldClassroomData.grade}° "${oldClassroomData.section}" — ${oldClassroomData.year}`
+        : "sin aula asignada";
+
+      confirm({
+        title: `¿Cambiar de aula a ${firstname} ${lastname}?`,
+        description: `Pasará de ${oldLabel} a ${newLabel}. Si el auxiliar responsable cambia, su nota de comportamiento del bimestre actual se reiniciará a 0.`,
+        onConfirm: doSubmit,
+      });
+      return;
+    }
+
+    await doSubmit();
   }
 
   return (
-    <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-100 transition-opacity duration-300">
-      <form
-        ref={modalRef}
-        onSubmit={onSubmit}
-        noValidate
-        className="flex flex-col gap-5 w-[25em] md:w-[45em] max-w-xl bg-white rounded-md shadow-xl p-6"
-      >
-        <div className="relative">
-          <TitleAndDescaription
-            title={isEdit ? 'EDITAR ESTUDIANTE' : 'REGISTRAR ESTUDIANTE'}
-            description='Ingresa los datos correctamente'
-            level='h3'
-            size='small'
-            weight='bold'
-          />
-          <FiX
-            size={23}
-            className="absolute top-0 right-0 cursor-pointer"
-            onClick={closeModal}
-          />
-        </div>
+    <>
+      <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-100 transition-opacity duration-300">
+        <form
+          ref={modalRef}
+          onSubmit={onSubmit}
+          noValidate
+          className="flex flex-col gap-5 w-[25em] md:w-[45em] max-w-xl bg-white rounded-md shadow-xl p-6"
+        >
+          <div className="relative">
+            <TitleAndDescaription
+              title={isEdit ? 'EDITAR ESTUDIANTE' : 'REGISTRAR ESTUDIANTE'}
+              description='Ingresa los datos correctamente'
+              level='h3'
+              size='small'
+              weight='bold'
+            />
+            <FiX
+              size={23}
+              className="absolute top-0 right-0 cursor-pointer"
+              onClick={closeModal}
+            />
+          </div>
 
-        {error && <span className="text-sm text-red-600">{error}</span>}
+          {error && <span className="text-sm text-red-600">{error}</span>}
 
-        <FormItem
-          formFields={formFields}
-          required={true}
-          selectVariant="secondary"
+          <FormItem
+            formFields={formFields}
+            required={true}
+            selectVariant="secondary"
+          />
+
+          <div className="flex gap-5 justify-end items-center">
+            <Button
+              type="submit"
+              variant="primary"
+              text={loading ? "Guardando..." : (isEdit ? "Actualizar" : "Registrar")}
+              disabled={loading}
+            />
+            <Button
+              variant="primary"
+              type="button"
+              text='Cancelar'
+              onClick={closeModal}
+            />
+          </div>
+        </form>
+      </div>
+
+      {config && (
+        <ModalConfirm
+          title={config.title}
+          description={config.description}
+          onConfirm={config.onConfirm}
+          closeModal={closeConfirm}
         />
-
-        <div className="flex gap-5 justify-end items-center">
-          <Button
-            type="submit"
-            variant="primary"
-            text={loading ? "Guardando..." : (isEdit ? "Actualizar" : "Registrar")}
-            disabled={loading}
-          />
-          <Button
-            variant="primary"
-            type="button"
-            text='Cancelar'
-            onClick={closeModal}
-          />
-        </div>
-      </form>
-    </div>
+      )}
+    </>
   )
 }
 
