@@ -62,11 +62,11 @@ function AttendanceTable({ rows = [], lastScannedDni, saveAttendance, date, setD
             <tr
               key={row.idStudent}
               className={`
-                border-b border-gray-100 transition-colors
+                border-b border-gray-100 transition-colors text-[.8em] sm:text-base 
                 ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}
               `}
             >
-              <td className="px-6 py-4">
+              <td className="px-6 py-1 md:py-3">
                 <div className="flex items-center gap-2 font-medium">
                   {isJustScanned && (
                     <span className="w-2 h-2 rounded-full bg-blue animate-pulse" />
@@ -74,12 +74,12 @@ function AttendanceTable({ rows = [], lastScannedDni, saveAttendance, date, setD
                   {row.fullname ?? "—"}
                 </div>
               </td>
-              <td className="px-6 py-4">{row.dni ?? "—"}</td>
-              <td className="px-6 py-4">
+              <td className="py-1 md:py-3">{row.dni ?? "—"}</td>
+              <td className="py-1 md:py-3">
                 {row.grade ? `${row.grade}°` : "—"}
               </td>
-              <td className="px-6 py-4">{row.section ?? "—"}</td>
-              <td className="px-6 py-4">
+              <td className="py-1 md:py-3">{row.section ?? "—"}</td>
+              <td className="py-1 md:py-3">
                 <span className={`
                   inline-flex items-center gap-1
                   px-3 py-1 rounded-full text-xs
@@ -89,8 +89,8 @@ function AttendanceTable({ rows = [], lastScannedDni, saveAttendance, date, setD
                   {badge.label}
                 </span>
               </td>
-              <td className="px-6 py-4">{row.time ?? "—"}</td>
-              <td className="px-6 py-4">
+              <td className="py-1 md:py-3">{row.time ?? "—"}</td>
+              <td className="py-1 md:py-3">
                 {editable ? (
                   <button
                     onClick={() => handleEdit(row)}
