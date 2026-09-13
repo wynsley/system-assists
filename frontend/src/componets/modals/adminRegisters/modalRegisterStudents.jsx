@@ -12,6 +12,7 @@ import { useClassrooms } from "../../../hooks/hoocksAdmin/useClassroom";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
 import { apiFetch } from "../../../helpers/apiFetch";
 import { ModalConfirm } from "./modalConfirmDelete";
+import { emitDataChange } from "../../../utils/dataBug";
 
 function ModalRegisterStudent({ closeModal, mode = "create", initialData = null, onSuccess }) {
   const isEdit = mode === "edit";
@@ -215,6 +216,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
 
       if (!isEdit) resetForm();
       onSuccess?.();
+      emitDataChange("classroom-roster")
       closeModal();
 
     } catch (err) {

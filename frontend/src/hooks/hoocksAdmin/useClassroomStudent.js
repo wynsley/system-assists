@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "../../helpers/apiFetch";
 import { useLoading } from "../hookGlobals/useLoading";
+import { onDataChange } from "../../utils/dataBug";
 
 function useClassroomRoster({ year, grade, section } = {}) {
   const [page, setPage] = useState(1);
@@ -51,6 +52,11 @@ function useClassroomRoster({ year, grade, section } = {}) {
 
   useEffect(() => {
     fetchRoster();
+  }, [fetchRoster]);
+
+  useEffect(() => {
+    const unsubscribe = onDataChange("classroom-roster", fetchRoster);
+    return unsubscribe;
   }, [fetchRoster]);
 
   const goToPage = useCallback((p) => {
