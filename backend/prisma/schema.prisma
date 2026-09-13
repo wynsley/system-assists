@@ -272,3 +272,13 @@ model Incident {
   @@index([idStudent, date])
   @@index([idAuxiliar, date])
 }
+
+model NonSchoolDay {
+  idNonSchoolDay Int      @id @default(autoincrement())
+  startDate      DateTime @db.Date
+  endDate        DateTime @db.Date
+  reason         String?  @db.VarChar(150)
+  createdAt      DateTime @default(now())
+
+  @@index([startDate, endDate])
+}
