@@ -56,6 +56,27 @@ const behaviorController = {
     }
   },
 
+  // Padre: nota actual + historial filtrable de comportamiento de un hijo
+  getSummaryByParent: async (req, res, next) => {
+    try {
+      const validate = await validateUtils.validateSchema({
+        schema: behaviorSchema.parentSummary,
+        data: req.query,
+      });
+
+      const idParent = req.user.sub;
+
+      const result = await behaviorService.getBehaviorSummaryByParent({
+        idParent,
+        ...validate,
+      });
+
+      return res.json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   calificar: async (req, res, next) => {
     try {
       const validate = await validateUtils.validateSchema({

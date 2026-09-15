@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma.js";
+import { AppError } from "../../utils/AppError.js";
 import { validateUtils } from "../../utils/validate.utils.js";
 import { behaviorUtils } from "../../utils/behavior.utils.js";
 import { mappersUtils } from "../../utils/mappers.utils.js";
@@ -180,6 +181,141 @@ const behaviorService = {
       idPeriod,
     });
     return { students, period, message };
+  },
+
+  /**
+   * Nota actual (bimestre en curso) de un estudiante, para el banner del padre.
+   * Escala 0-20: 0-10 = C, 11-14 = B, 15-17 = A, 18-20 = AD.
+   */
+  getCurrentByStudent: async ({ idStudent }) => {
+    let period;
+    try {
+      period = await academicPeriodService.getCurrent();
+    } catch {
+      return { score: 0, scale: behaviorUtils.getScale(0), percentage: 0, period: null };
+    }
+
+    const behavior = await prisma.behavior.findUnique({
+      where: { idStudent_idPeriod: { idStudent, idPeriod: period.idPeriod } },
+      select: { score: true },
+    });
+
+    const score = behavior?.score ?? 0;
+
+    return {
+      score,
+      scale: behaviorUtils.getScale(score),
+      percentage: Math.round((score / 20) * 100),
+      period,
+    };
+  },
+
+  /**
+   * Resuelve el rango de fechas [start, end] según el filtro de la pestaña
+   * Comportamiento del padre. Por defecto (sin period) es "Todo el Año".
+   */
+  resolveBehaviorHistoryRange: async ({ period }) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (period === "WEEK") {
+      const day = today.getDay();
+      const diffToMonday = day === 0 ? -6 : 1 - day;
+      const start = new Date(today);
+      start.setDate(today.getDate() + diffToMonday);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6); // domingo (semana calendario completa)
+      return { start, end };
+    }
+
+    if (period === "BIMESTER") {
+      const current = await academicPeriodService.getCurrent();
+      return { start: new Date(current.startDate), end: new Date(current.endDate) };
+    }
+
+    // YEAR (default: "Todo el Año")
+    const year = today.getFullYear();
+    return { start: new Date(`${year}-01-01`), end: new Date(`${year}-12-31`) };
+  },
+
+  /**
+   * Historial de BehaviorHistory de un estudiante (calificaciones + incidentes),
+   * para la tabla de la pestaña Comportamiento del padre.
+   */
+  getHistoryByStudent: async ({ idStudent, period, page, limit }) => {
+    const { start, end } = await behaviorService.resolveBehaviorHistoryRange({ period });
+    const endExclusive = new Date(end);
+    endExclusive.setDate(endExclusive.getDate() + 1);
+
+    const where = {
+      behavior: { idStudent },
+      date: { gte: start, lt: endExclusive },
+    };
+
+    const [historyRaw, total] = await Promise.all([
+      prisma.behaviorHistory.findMany({
+        where,
+        select: {
+          idHistory: true,
+          date: true,
+          previousScore: true,
+          newScore: true,
+          description: true,
+          type: true,
+          auxiliar: { select: { firstname: true, lastname: true } },
+          incident: {
+            select: {
+              incidentCatalog: { select: { name: true, type: true, points: true } },
+            },
+          },
+        },
+        orderBy: { date: "desc" },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      prisma.behaviorHistory.count({ where }),
+    ]);
+
+    const history = historyRaw.map((h) => ({
+      idHistory: h.idHistory,
+      date: h.date,
+      score: h.newScore,
+      previousScore: h.previousScore,
+      delta: h.newScore - h.previousScore,
+      scale: behaviorUtils.getScale(h.newScore),
+      type: h.type,
+      description:
+        h.description ??
+        h.incident?.incidentCatalog?.name ??
+        (h.type === "CALIFICACION" ? "Calificación manual" : "Incidente registrado"),
+      auxiliar: h.auxiliar ? `${h.auxiliar.firstname} ${h.auxiliar.lastname}` : null,
+    }));
+
+    return { history, total };
+  },
+
+  /**
+   * Endpoint principal del padre: nota actual + historial filtrable.
+   * Verifica que idStudent pertenezca a idParent antes de devolver nada.
+   */
+  getBehaviorSummaryByParent: async ({ idParent, idStudent, period, page, limit }) => {
+    const link = await prisma.studentParent.findFirst({
+      where: { idParent, idStudent },
+      select: { idStudentParent: true },
+    });
+
+    if (!link) {
+      throw new AppError("No autorizado", 403, [
+        { field: "idStudent", message: "Este estudiante no pertenece a tu cuenta" },
+      ]);
+    }
+
+    const [current, { history, total }] = await Promise.all([
+      behaviorService.getCurrentByStudent({ idStudent }),
+      behaviorService.getHistoryByStudent({ idStudent, period, page, limit }),
+    ]);
+
+    return { current, history, total };
   },
 };
 

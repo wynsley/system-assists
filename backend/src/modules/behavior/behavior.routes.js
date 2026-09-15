@@ -28,6 +28,12 @@ behaviorRoutes.get(
   behaviorController.getConsolidado,
 );
 
+behaviorRoutes.get(
+  "/parent-summary",
+  authMiddleware,
+  authMiddlewareRole(["PARENT"]),
+  behaviorController.getSummaryByParent,
+);
 behaviorRoutes.post(
   "/calificar",
   authMiddleware,
