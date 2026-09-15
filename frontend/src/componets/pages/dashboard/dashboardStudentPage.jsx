@@ -3,7 +3,7 @@ import { Banner } from "../../organims/dashboardStudent/banner"
 import { CardStats } from "../../organims/dashboardStudent/cardStats"
 import { Overview } from "../../organims/dashboardStudent/homeOverview"
 
-function DashboardStudentPage({ userData }) {
+function DashboardStudentPage() {
 
   const stats = [
     { label:'Asistió el día de hoy' , attended : true },
