@@ -48,6 +48,12 @@ attendanceRoutes.get(
   attendanceController.getSummaryByParent,
 );
 attendanceRoutes.get(
+  "/parent-detail",
+  authMiddleware,
+  authMiddlewareRole(["PARENT"]),
+  attendanceController.getDetailByParent,
+);
+attendanceRoutes.get(
   "/:id",
   authMiddleware,
   authMiddlewareRole(["ADMIN", "AUXILIAR"]),

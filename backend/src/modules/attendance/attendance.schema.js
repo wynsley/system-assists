@@ -59,7 +59,30 @@ const attendanceSchema = {
         fields: attendanceFields.update,
       });
     }),
-
+  parentDetail: z
+    .object({
+      idStudent: idField({
+        label: "El ID del estudiante",
+        required: true
+      }),
+      status: z.enum(["PRESENTE", "TARDANZA", "JUSTIFICADA", "FALTA"]).optional(),
+      period: z.enum(["WEEK", "BIMESTER", "YEAR"]).optional(),
+      page: numericField({
+        label: "La página",
+        min: 1,
+        max: 1000,
+        defaultValue: 1,
+        required: false
+      }),
+      limit: numericField({
+        label: "El límite",
+        min: 1,
+        max: 100,
+        defaultValue: 20,
+        required: false
+      }),
+    })
+    .strict({ message: "No se permiten campos adicionales" }),
   params: z.object({
     id: idField({ label: "El ID de attendance", required: false }),
     page: numericField({

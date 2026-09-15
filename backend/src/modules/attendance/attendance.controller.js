@@ -116,7 +116,27 @@ const attendanceController = {
       next(error);
     }
   },
+  // Padre: detalle filtrable de asistencia de un hijo específico
+  getDetailByParent: async (req, res, next) => {
+    try {
+      const validate = await validateUtils.validateSchema({
+        schema: attendanceSchema.parentDetail,
+        data: req.query,
+      });
 
+      const idParent = req.user.sub;
+
+      const result = await attendanceService.getAttendanceDetailByParent({
+        idParent,
+        ...validate,
+      });
+
+      return res.json({ success: true, ...result });
+    } catch (error) {
+      next(error);
+    }
+  },
+  
   update: async (req, res, next) => {
     try {
       const { id: idAttendance } = await validateUtils.validateSchema({
