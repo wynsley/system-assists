@@ -4,35 +4,32 @@ import { GiCheckMark } from "react-icons/gi";
 import { FiX } from "react-icons/fi";
 import { FaArrowTrendUp } from "react-icons/fa6";
 import { Titlebanner } from "../../molecules/attendanceStudent/titleBanner";
-import { FilterStudents } from "../../molecules/filterStudents";
 
 function BannerAttendances({
-  students,
-  currentStudent,
-  setSelectedStudent,
-  selectedStudent
+  selectedStudentData,
+  stats
 }) {
   const title = `Asistencias de`
 
   const attendanceStats = [
     {
       icon: <HiOutlineCalendarDateRange size={30} className="text-blue-500 " />,
-      stats: currentStudent?.stats?.days ?? 0,
+      stats: stats.schoolDaysRegistered ?? 0,
       text: 'Días registrados'
     },
     {
       icon: <GiCheckMark size={30} className="text-green-700 " />,
-      stats: currentStudent?.stats?.presents ?? 0,
+      stats: stats.attendances ?? 0,
       text: 'Asistencias'
     },
     {
       icon: <FiX size={30} className="text-red-700 " />,
-      stats: currentStudent?.stats?.late ?? 0,
+      stats: stats.absences ?? 0,
       text: 'Inasistencias',
     },
     {
       icon: <FaArrowTrendUp size={30} />,
-      stats: currentStudent?.stats?.rate ?? 0,
+      stats: `${stats.attendanceRate}%` ?? 0,
       text: 'Taza de asistencias'
     }
   ]
@@ -51,14 +48,7 @@ function BannerAttendances({
       <div className="flex items-center justify-between">
         <Titlebanner
           title={title}
-          currentStudent={currentStudent}
-        />
-
-        {/* FILTRO DE HIJOS */}
-        <FilterStudents
-          setSelectedStudent={setSelectedStudent}
-          selectedStudent={selectedStudent}
-          students={students}
+          currentStudent={selectedStudentData}
         />
 
       </div>

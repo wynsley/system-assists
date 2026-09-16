@@ -2,8 +2,9 @@ import { Title } from "../../atoms/title"
 import { Paragraph } from "../../atoms/paragraph"
 import { useVisible } from "../../../hooks/hookGlobals/useVisible"
 import { useGreeting } from "../../../hooks/hookGlobals/useGreeting"
+import { FilterStudents } from "../filterStudents"
 
-function Article () {
+function Article ({studentsOptions, selectedStudent, setSelectedStudent}) {
 
   const { visible } = useVisible(90)
   const {
@@ -13,8 +14,9 @@ function Article () {
   } = useGreeting()
   
   return(
-    <article className="max-w-5xl mx-auto relative z-10">
-          <span className="inline-block bg-white/10 text-cyan-200 text-xs 
+    <article className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row md:items-center md:justify-between">
+      <div>
+        <span className="inline-block bg-white/10 text-cyan-200 text-xs 
             font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-4"
           >
             {greetingLabel}
@@ -43,6 +45,15 @@ function Article () {
               day: 'numeric',
             })}
           </Paragraph>
+      </div>
+
+      
+        <FilterStudents
+          students={studentsOptions}
+          selectedStudent={selectedStudent}
+          setSelectedStudent={setSelectedStudent}
+          variant="primary"
+        />
       </article>
   )
 }
