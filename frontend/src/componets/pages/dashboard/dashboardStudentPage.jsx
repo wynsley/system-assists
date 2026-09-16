@@ -2,7 +2,7 @@ import { MyTemplate } from "../../templates/myTemplate";
 import { Banner } from "../../organims/dashboardStudent/banner";
 import { CardStats } from "../../organims/dashboardStudent/cardStats";
 import { Overview } from "../../organims/dashboardStudent/homeOverview";
-import { useSelectedStudent } from "../../../context/selectStudentContext";
+import { useSelectedStudent } from "../../../context/parent/selectStudentContext";
 import { useParentAttendance } from "../../../hooks/hooksParent/useParentAttendance";
 import { useParentBehavior } from "../../../hooks/hooksParent/useParentBehavior";
 
