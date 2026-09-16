@@ -21,7 +21,7 @@ function LeftContent () {
     {
       label: "GESTIÓN ACADÉMICA",
       icon : <SiGoogleclassroom  size={30}/>,
-      href : '/admin/generateQR'
+      href : '/admin/academic-management'
     },
   ]
 
