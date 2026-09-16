@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate } from "react-router-dom";
 // Layout
 import { MainLayout } from "./componets/layouts/mainlayout";
+import { ParentLayout } from "./componets/layouts/parentLayout";
 //loaging
 import { Loading } from "./componets/molecules/loading";
 // Auth
@@ -34,7 +35,7 @@ function App() {
   // Esperar a que el AuthProvider termine de verificar la sesión
   if (loading) {
     return (
-      <Loading logo={'/LOGO.png'}/>
+      <Loading logo={'/LOGO.png'} />
     );
   }
 
@@ -60,56 +61,60 @@ function App() {
         {/* ===================== PARENT ===================== */}
 
         <Route
-          path="/father"
-          element={
-            <ProtectedRoute
-              isAuthenticated={isAuthenticated}
-              userRole={userData.role}
-              allowedRoles={["PARENT"]}
-            >
-              <DashboardStudentPage userData={userData} />
-            </ProtectedRoute>
-          }
-        />
+          element={<ParentLayout />}
+        >
+          <Route
+            path="/father"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={userData.role}
+                allowedRoles={["PARENT"]}
+              >
+                <DashboardStudentPage userData={userData} />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/attendance-student"
-          element={
-            <ProtectedRoute
-              isAuthenticated={isAuthenticated}
-              userRole={userData.role}
-              allowedRoles={["PARENT"]}
-            >
-              <AttendanceStudentPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/attendance-student"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={userData.role}
+                allowedRoles={["PARENT"]}
+              >
+                <AttendanceStudentPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/behavior-student"
-          element={
-            <ProtectedRoute
-              isAuthenticated={isAuthenticated}
-              userRole={userData.role}
-              allowedRoles={["PARENT"]}
-            >
-              <BehaviorStudentPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/behavior-student"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={userData.role}
+                allowedRoles={["PARENT"]}
+              >
+                <BehaviorStudentPage />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route
-          path="/notifications-student"
-          element={
-            <ProtectedRoute
-              isAuthenticated={isAuthenticated}
-              userRole={userData.role}
-              allowedRoles={["PARENT"]}
-            >
-              <NotificationsStudentPage />
-            </ProtectedRoute>
-          }
-        />
+          <Route
+            path="/notifications-student"
+            element={
+              <ProtectedRoute
+                isAuthenticated={isAuthenticated}
+                userRole={userData.role}
+                allowedRoles={["PARENT"]}
+              >
+                <NotificationsStudentPage />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
 
         {/* ===================== AUXILIAR ===================== */}
 
