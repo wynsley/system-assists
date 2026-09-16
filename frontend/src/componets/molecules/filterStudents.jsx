@@ -10,11 +10,11 @@ function FilterStudents ({
     default : `border-b border-borderC
       px-4 py-3 outline-none
       focus:ring-2 focus:ring-blue-400
-      cursor-pointer`,
+      cursor-pointer `,
     primary : `border-b border-borderC 
       px-4 py-3 outline-none bg-white 
       focus:ring-2 focus:ring-blue-400
-      cursor-pointer`
+      cursor-pointer rounded-md` 
   }
   
   return(

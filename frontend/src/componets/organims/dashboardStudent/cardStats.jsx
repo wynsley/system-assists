@@ -33,11 +33,11 @@ function CardStats({ stats }) {
                 s.attended !== undefined
                   ? (
                     s.attended
-                      ? <GiCheckMark />
-                      : <CgClose />
+                      ? <GiCheckMark className="text-green-500 size-7"/>
+                      : <CgClose className="text-red-500 size-7"/>
                   )
                   : (
-                    <span>{s.value}</span>
+                    <span className="text-[1.1em] text-cyanO">{s.value}</span>
                   )
               }
               weight="bold"
@@ -46,7 +46,7 @@ function CardStats({ stats }) {
             />
             <Small
               text={s.label}
-
+              size="large"
             />
           </div>
         ))}

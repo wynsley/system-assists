@@ -1,6 +1,6 @@
 import { Article } from "../../molecules/dashboardStudent/articlebanner"
 
-function Banner () {
+function Banner ({studentsOptions, selectedStudent, setSelectedStudent}) {
   return(
     <section className="
       relative
@@ -17,7 +17,11 @@ function Banner () {
     >
         <div className="absolute -top-16 -right-16 w-60 h-60 rounded-full bg-white/5" />
         <div className="absolute -bottom-10 right-20 w-40 h-40 rounded-full bg-white/10" />
-    <Article/>
+    <Article
+      studentsOptions={studentsOptions}
+      selectedStudent={selectedStudent}
+      setSelectedStudent={setSelectedStudent}
+    />
     </section>
   )
 }
