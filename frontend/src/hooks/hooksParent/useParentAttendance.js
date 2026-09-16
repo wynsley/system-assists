@@ -8,7 +8,13 @@ function useParentAttendance({ idStudent, status, period, page = 1, limit = 20 }
     absences: 0,
     attendanceRate: 0,
   });
-  const [counts, setCounts] = useState({ total: 0, present: 0, late: 0, justified: 0, absent: 0 });
+  const [counts, setCounts] = useState({ 
+    total: 0, 
+    present: 0, 
+    late: 0, 
+    justified: 0, 
+    absent: 0 
+  });
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
