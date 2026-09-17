@@ -3,10 +3,10 @@ import { TitleIconLink } from "../titleIconLink";
 
 function FilterAttendances({
   statusFilter,
-  currentStudent,
   setStatusFilter,
   periodFilter,
   setPeriodFilter,
+  counts,
 }) {
   const title = "FILTRAR POR ESTADO";
 
@@ -16,98 +16,84 @@ function FilterAttendances({
 
       {/* DESKTOP */}
       <div className="hidden md:flex flex-wrap items-center gap-3">
-        {/* TODOS */}
         <button
-          onClick={() => setStatusFilter("Todos")}
+          onClick={() => setStatusFilter(null)}
           className={`px-5 py-3 rounded-2xl font-semibold transition ${
-            statusFilter === "Todos"
+            statusFilter === null
               ? "bg-[#003347] text-white"
               : "bg-gray-100 text-[#1f2a44] hover:bg-gray-200"
           }`}
         >
-          Todos ({currentStudent?.stats?.days})
+          Todos ({counts?.total ?? 0})
         </button>
-        {/* PRESENTES */}
+
         <button
-          onClick={() => setStatusFilter("Presente")}
+          onClick={() => setStatusFilter("PRESENTE")}
           className={`px-5 py-3 rounded-2xl font-semibold transition ${
-            statusFilter === "Presente"
+            statusFilter === "PRESENTE"
               ? "bg-green-700 text-white"
               : "bg-gray-100 text-[#1f2a44] hover:bg-gray-200"
           }`}
         >
-          Presentes ({currentStudent?.stats?.presents})
+          Presentes ({counts?.present ?? 0})
         </button>
 
-        {/* AUSENTES */}
         <button
-          onClick={() => setStatusFilter("Ausente")}
+          onClick={() => setStatusFilter("FALTA")}
           className={`px-5 py-3 rounded-2xl font-semibold transition ${
-            statusFilter === "Ausente"
+            statusFilter === "FALTA"
               ? "bg-red-600 text-white"
               : "bg-gray-100 text-[#1f2a44] hover:bg-gray-200"
           }`}
         >
-          Ausentes ({currentStudent?.stats?.absents})
+          Ausentes ({counts?.absent ?? 0})
         </button>
-        {/* TARDANZAS */}
+
         <button
-          onClick={() => setStatusFilter("Tardanza")}
+          onClick={() => setStatusFilter("TARDANZA")}
           className={`px-5 py-3 rounded-2xl font-semibold transition ${
-            statusFilter === "Tardanza"
+            statusFilter === "TARDANZA"
               ? "bg-yellow-500 text-white"
               : "bg-gray-100 text-[#1f2a44] hover:bg-gray-200"
           }`}
         >
-          Tardanzas ({currentStudent?.stats?.late})
+          Tardanzas ({counts?.late ?? 0})
         </button>
 
-        {/* SELECT PERIODO */}
         <select
-          value={periodFilter}
-          onChange={(e) => setPeriodFilter(e.target.value)}
+          value={periodFilter ?? ""}
+          onChange={(e) => setPeriodFilter(e.target.value || null)}
           className="bg-gray-100 text-[#1f2a44] px-5 py-3 rounded-2xl font-semibold outline-none cursor-pointer hover:bg-gray-200 transition"
         >
-          <option value="">Filtrar período</option>
-          <option value="semanal">Semanal</option>
-          <option value="bimestral">Bimestral</option>
-          <option value="anual">Anual</option>
+          <option value="">Todo el histórico</option>
+          <option value="WEEK">Semanal</option>
+          <option value="BIMESTER">Bimestral</option>
+          <option value="YEAR">Anual</option>
         </select>
       </div>
 
       {/* MOBILE */}
       <div className="flex md:hidden gap-3 mt-4">
-        
-        {/* SELECT ESTADO */}
         <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          value={statusFilter ?? ""}
+          onChange={(e) => setStatusFilter(e.target.value || null)}
           className="w-full bg-gray-100 text-[#1f2a44] px-5 py-3 rounded-2xl font-semibold outline-none"
         >
-          <option value="Todos">
-            Todos ({currentStudent?.stats?.days})
-          </option>
-          <option value="Presente">
-            Presentes ({currentStudent?.stats?.presents})
-          </option>
-          <option value="Ausente">
-            Ausentes ({currentStudent?.stats?.absents})
-          </option>
-          <option value="Tardanza">
-            Tardanzas ({currentStudent?.stats?.late})
-          </option>
+          <option value="">Todos ({counts?.total ?? 0})</option>
+          <option value="PRESENTE">Presentes ({counts?.present ?? 0})</option>
+          <option value="FALTA">Ausentes ({counts?.absent ?? 0})</option>
+          <option value="TARDANZA">Tardanzas ({counts?.late ?? 0})</option>
         </select>
 
-        {/* SELECT PERIODO */}
         <select
-          value={periodFilter}
-          onChange={(e) => setPeriodFilter(e.target.value)}
+          value={periodFilter ?? ""}
+          onChange={(e) => setPeriodFilter(e.target.value || null)}
           className="w-full bg-gray-100 text-[#1f2a44] px-5 py-3 rounded-2xl font-semibold outline-none"
         >
-          <option value="">Filtrar período</option>
-          <option value="semanal">Semanal</option>
-          <option value="bimestral">Bimestral</option>
-          <option value="anual">Anual</option>
+          <option value="">Todo el histórico</option>
+          <option value="WEEK">Semanal</option>
+          <option value="BIMESTER">Bimestral</option>
+          <option value="YEAR">Anual</option>
         </select>
       </div>
     </div>

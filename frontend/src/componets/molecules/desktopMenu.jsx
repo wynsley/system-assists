@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import { HiBars3, HiXMark, HiChevronDown } from "react-icons/hi2";
 import { useLocation } from "react-router-dom";
 import { NavbarLink } from "../atoms/navbarLink";
