@@ -1,32 +1,43 @@
+import { useEffect, useState } from "react";
 import { MyTemplate } from "../../templates/myTemplate";
 import { BannerBehavior } from "../../organims/behaviorStudent/bannerBehavior";
-import { useState } from "react";
 import { CardGrandingScale } from "../../organims/behaviorStudent/cardgrandingScale";
-import { FilterBehavior } from "../../organims/behaviorStudent/filtersBehavior";
-import { students } from "../../../mocks/students";
+import { IncidentStudentList } from "../../organims/behaviorStudent/incidentStudentList";
+import { useSelectedStudent } from "../../../hooks/hooksParent/useSelectedStudent";
+import { useParentBehavior } from "../../../hooks/hooksParent/useParentBehavior";
 
-function BehaviorStudentPage () {
+function BehaviorStudentPage() {
+  const { selectedStudent, selectedStudentData } = useSelectedStudent();
+  const [period, setPeriod] = useState(null); 
+  const [page, setPage] = useState(1);
 
-const [selectedStudent, setSelectedStudent] = useState(1)
+  useEffect(() => { setPage(1); }, [selectedStudent, period]);
 
-  const currentStudent = students.find(
-    (student) => student.id === selectedStudent
-  )
+  const { current, history, total, loading, error } = useParentBehavior({
+    idStudent: selectedStudent,
+    period,
+    page,
+  });
 
-  return(
-    <MyTemplate> 
+  return (
+    <MyTemplate>
       <BannerBehavior
-        currentStudent={currentStudent}
-        setSelectedStudent= {setSelectedStudent}
-        selectedStudent= {selectedStudent}
-        students = { students}
+        selectedStudentData={selectedStudentData}
+        current={current}
       />
-      <CardGrandingScale/>
-      <FilterBehavior
-        currentStudent={currentStudent}
+      <CardGrandingScale current={current} />
+      <IncidentStudentList
+        history={history}
+        total={total}
+        period={period}
+        setPeriod={setPeriod}
+        page={page}
+        setPage={setPage}
+        loading={loading}
       />
+      {error && <p className="text-red-500 text-center">{error}</p>}
     </MyTemplate>
-  )
+  );
 }
 
-export {BehaviorStudentPage}
+export { BehaviorStudentPage };
