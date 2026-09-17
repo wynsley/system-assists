@@ -9,7 +9,7 @@ function Button({
 }) {
 
   const variants = {
-    base: ' bg-blueT text-white font-bold rounded-md px-3',
+    base: ' bg-blueT text-white font-bold rounded-md px-3 transition-all duration-300 hover:-translate-y-1',
     default: ` text-white px-3`,
     primary: `
     md:right-9 lg:right-9  xl:right-8 bottom-[-2em]
