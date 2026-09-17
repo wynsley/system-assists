@@ -1,10 +1,17 @@
+// SelectedStudentProvider.jsx
 import { useState, useEffect, useMemo } from "react";
 import { SelectedStudentContext } from "./selectStudentContext.js";
 import { useParentSummary } from "../../hooks/hooksParent/useParentSumary.js";
 
+const STORAGE_KEY = "selectedStudentId";
+
 function SelectedStudentProvider({ children }) {
   const { studentsSummary, loading, error, refetch } = useParentSummary();
-  const [selectedStudent, setSelectedStudent] = useState(null);
+
+  const [selectedStudent, setSelectedStudent] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? Number(saved) : null;
+  });
 
   const studentsOptions = useMemo(
     () =>
@@ -15,12 +22,18 @@ function SelectedStudentProvider({ children }) {
     [studentsSummary],
   );
 
-  // auto-selecciona el primer hijo SOLO si el actual ya no existe en la lista
   useEffect(() => {
     if (studentsOptions.length === 0) return;
     const exists = studentsOptions.some((s) => s.id === selectedStudent);
     if (!exists) setSelectedStudent(studentsOptions[0].id);
   }, [studentsOptions, selectedStudent]);
+
+  // persiste cada vez que cambia
+  useEffect(() => {
+    if (selectedStudent != null) {
+      localStorage.setItem(STORAGE_KEY, String(selectedStudent));
+    }
+  }, [selectedStudent]);
 
   const selectedStudentData = useMemo(
     () => studentsSummary.find((s) => s.idStudent === selectedStudent) ?? null,
