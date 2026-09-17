@@ -12,7 +12,6 @@ function DashboardStudentPage() {
     selectedStudent,
     setSelectedStudent,
     selectedStudentData: selected,
-    loadingStudents,
   } = useSelectedStudent();
 
   const {
