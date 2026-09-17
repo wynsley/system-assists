@@ -1,9 +1,7 @@
 import { HiOutlineBookOpen, HiOutlineClipboardDocumentList} from "react-icons/hi2";
 import { QuickAccess } from "./quickAccess";
 import { TitleIconLink } from "../../molecules/titleIconLink";
-import { Link } from "../../atoms/link"
 import { CoursesPorsentages } from "./coursesPorcentageRight"
-import { href } from "react-router-dom";
 import { useVisible } from "../../../hooks/hookGlobals/useVisible";
 
 function RightOverview ({ averageAttendances   }) {

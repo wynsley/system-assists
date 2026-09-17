@@ -1,49 +1,7 @@
 import { LeftOverview } from "./leftOverview";
 import { RightOverview } from "./rightOverview";
 
-function Overview() {
-
-  const recentResources = [
-    {
-      title: "TEXTO: Practica-Lógica",
-      time: "Hace 3 horas",
-    },
-    {
-      title: "ARCHIVO: PRÁCTICA LÓGICA",
-      time: "Hace 3 horas",
-    },
-    {
-      title: "TAREA: Compresión Lectora",
-      time: "Hace 3 días",
-    },
-    {
-      title: "ARCHIVO: ROLE-PLAY / DIÁLOGO EN PAREJAS",
-      time: "Hace 4 días",
-    },
-  ];
-
-  const averageAttendances = [
-  {
-    name: "PROMEDIO SEMANAL",
-    description: "Asistencia de la semana",
-    progress: 95,
-  },
-  {
-    name: "PROMEDIO BIMESTRAL",
-    description: "Asistencia del bimestre",
-    progress: 90,
-  },
-  {
-    name: "PROMEDIO ANUAL",
-    description: "Asistencia del año",
-    progress: 80,
-  },
-  {
-    name: "COMPORTAMIENTO",
-    description: "Nivel de conducta",
-    progress: 78,
-  },
-];
+function Overview({averageAttendances}) {
 
   return (
     <section className="
@@ -58,7 +16,6 @@ function Overview() {
 
       {/*COLUMN RIGHT */}
         <RightOverview
-          recentResources={recentResources}
           averageAttendances={averageAttendances}
         />
       </div>

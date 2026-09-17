@@ -1,10 +1,11 @@
 import { CardRecentNotifications } from "../../molecules/dashboardStudent/cardLeftRecentNotis";
 import { AttendanceClassCard } from "./attendanceCardLeft";
-import { GiCheckMark, GiAlarmClock } from "react-icons/gi";
 import { IoNotificationsSharp } from "react-icons/io5";
 import { MdDateRange } from "react-icons/md";
-import { FiX } from "react-icons/fi";
 import { TitleIconLink } from "../../molecules/titleIconLink";
+import { useSelectedStudent } from "../../../hooks/hooksParent/useSelectedStudent";
+import { useParentAttendance } from "../../../hooks/hooksParent/useParentAttendance";
+import { ATTENDANCE_WEEK_PARENT } from "../../../utils/attendenceWeekParent";
 
 function LeftOverview() {
   const title = 'MIS NOTIFICACIONES RECIENTES'
@@ -31,43 +32,27 @@ function LeftOverview() {
     },
   ]
 
-  const AttendancesClasses = [
-    {
-      day: "vie.",
-      date: "11 May.",
-      hour: "6:50 AM",
-      icon: <GiCheckMark size={22} className="text-green-600"/>,
-      stats: "Asistió",
-    },
-    {
-      day: "jue.",
-      date: "11 May.",
-      hour: "7:30 AM",
-      icon: <GiAlarmClock size={22} className="text-yellow-800"/>,
-      stats: "Tarde",
-    },
-    {
-      day: "mie.",
-      date: "11 May.",
-      hour: "8:00 AM",
-      icon: <FiX size={22} className="text-red-700"/>,
-      stats: "Faltó",
-    },
-      {
-      day: "mar.",
-      date: "11 May.",
-      hour: "6:50 AM",
-      icon: <GiCheckMark size={22} className="text-green-600"/>,
-      stats: "Asistió",
-    },
-      {
-      day: "lun.",
-      date: "11 May.",
-      hour: "6:50 AM",
-      icon: <GiCheckMark size={22} className="text-green-600"/>,
-      stats: "Asistió",
-    },
-  ];
+  const { selectedStudent } = useSelectedStudent();
+
+  const { rows, loading } = useParentAttendance({
+    idStudent: selectedStudent,
+    period: "WEEK",
+    limit: 7,
+  });
+
+  const AttendancesClasses = rows.map((row) => {
+    const dateObj = new Date(row.date);
+    const config = ATTENDANCE_WEEK_PARENT[row.status] ?? ATTENDANCE_WEEK_PARENT.FALTA;
+
+    return {
+      day: dateObj.toLocaleDateString("es-PE", { weekday: "short" }), // "vie."
+      date: dateObj.toLocaleDateString("es-PE", { day: "2-digit", month: "short" }), // "11 may."
+      hour: row.time ?? "—",
+      icon: config.icon,
+      stats: config.label,
+    };
+  });
+
   return (
     <section className="flex flex-col gap-6 font-poppins">
 
@@ -90,9 +75,15 @@ function LeftOverview() {
           text={'Ver Todo'}
           href='/attendance-student'
         />
-        <AttendanceClassCard
-          AttendancesClasses={AttendancesClasses}
-        />
+        {loading ? (
+          <p className="text-sm text-gray-400 py-4">Cargando asistencias...</p>
+        ) : AttendancesClasses.length === 0 ? (
+          <p className="text-sm text-gray-400 py-4">Sin registros esta semana.</p>
+        ) : (
+          <AttendanceClassCard
+            AttendancesClasses={AttendancesClasses}
+          />
+        )}
       </div>
     </section>
   )

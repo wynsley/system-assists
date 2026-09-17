@@ -1,4 +1,3 @@
-import { Title } from "../../atoms/title"
 import { Paragraph } from "../../atoms/paragraph"
 import { Small } from "../../atoms/small"
 
