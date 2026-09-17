@@ -95,28 +95,27 @@ function FiltersAttendancesSection({
         />
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-4 pt-2">
-          <Button
-            text={'Anterior'}
-            variant="ternary"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="px-4 py-2 rounded-lg bg-gray-100 disabled:opacity-40"
-          />
-          <span className="text-sm text-gray-500 font-bold">
-            Página {page} de {totalPages}
-          </span>
-          <Button
-          text={'Siguiente'}
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            variant="ternary"
-            className="px-4 py-2 rounded-lg bg-gray-100 disabled:opacity-40"
-          />
-            
-        </div>
-      )}
+      <div className="flex justify-center items-center gap-4 pt-2 min-h-[52px]">
+        {totalPages > 1 && (
+          <>
+            <Button
+              text="Anterior"
+              variant="ternary"
+              disabled={page <= 1} 
+              onClick={() => setPage((p) => p - 1)} 
+              className="px-4 py-2 rounded-lg bg-gray-100 disabled:opacity-40"
+            />
+            <span className="text-sm text-gray-500 font-bold">Página {page} de {totalPages}</span>
+            <Button
+              text='Siguiente'
+              variant="ternary"
+              disabled={page >= totalPages} 
+              onClick={() => setPage((p) => p + 1)} 
+              className="px-4 py-2 rounded-lg bg-gray-100 disabled:opacity-40"
+            />
+          </>
+        )}
+      </div>
     </section>
   );
 }
