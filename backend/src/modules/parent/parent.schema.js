@@ -90,6 +90,16 @@ const parentSchema = {
         states: parentFields.relationship,
         required: false,
       }).optional(),
+      
+      idParent: idField({
+        label: "El ID del padre",
+        required: false,
+      }).optional(),
+      
+      idStudent: idField({
+        label: "El ID del estudiante",
+        required: false,
+      }).optional(),
     })
     .strict({
       message: "No se permiten campos adicionales",

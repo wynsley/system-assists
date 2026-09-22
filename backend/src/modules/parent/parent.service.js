@@ -40,7 +40,7 @@ const parentService = {
     return queryResult.parent;
   },
 
-  get: async ({ page, limit, sortOrder, search, sortBy, relationship }) => {
+  get: async ({ page, limit, sortOrder, search, sortBy, relationship, idParent, idStudent }) => {
     const where = searchUtils.buildSearchWhere({
       search,
       numberFields: ["idStudentParent", "idStudent", "idParent"],
@@ -53,6 +53,8 @@ const parentService = {
       ],
       filters: {
         relationship,
+        idParent,
+        idStudent,
       },
     });
 
@@ -67,7 +69,7 @@ const parentService = {
       ],
     };
 
-    const orderBy = relationSortMap[sortBy] ?? { [sortBy]: sortOrder };
+    const orderBy = relationSortMap[sortBy] ?? relationSortMap.student;
 
     const [parents, total] = await Promise.all([
       prisma.studentParent.findMany({
