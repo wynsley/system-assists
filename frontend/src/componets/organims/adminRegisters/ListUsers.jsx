@@ -2,7 +2,7 @@ import { useState } from "react";
 import { TitleAndIcon } from "../../molecules/titleAndIcon"
 import { HiUsers } from "react-icons/hi2";
 import { FaEdit, FaTrash } from "react-icons/fa";
-import { LuBookOpenCheck } from "react-icons/lu"; // ícono para "asignar secciones"
+import { LuBookOpenCheck } from "react-icons/lu"; 
 import { Table } from "../tableReusable";
 import { ROLE_LABELS } from "../../../config/roleLabels";
 import { Paginations } from "../../molecules/adminRegisters/Paginations";
@@ -17,7 +17,6 @@ import { Filters } from "../../molecules/adminRegisters/filters";
 import { ModalRegisterUser } from "../../modals/adminRegisters/modalReegisterUsers";
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
 import { ModalAssignSections } from "../../modals/adminRegisters/modalAssignSections";
-// import { ModalAssignSections } from "../../modals/adminRegisters/modalAssignSections"; // 👈 pendiente confirmar ruta real
 
 function ListUsers() {
   const title = 'USUARIOS'
