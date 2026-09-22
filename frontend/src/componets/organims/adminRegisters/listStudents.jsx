@@ -1,6 +1,7 @@
 import { TitleAndIcon } from "../../molecules/titleAndIcon"
 import { HiAcademicCap } from "react-icons/hi2";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { HiUserGroup } from "react-icons/hi2";
 import { Table } from "../tableReusable";
 import { GENDER_LABELS, STATUS_LABELS, STATUS_BADGE_COLORS } from "../../../config/studentLabels";
 import { Paginations } from "../../molecules/adminRegisters/Paginations";
@@ -15,12 +16,13 @@ import { Filters } from "../../molecules/adminRegisters/filters";
 //Modals
 import { ModalRegisterStudent } from "../../modals/adminRegisters/modalRegisterStudents";
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
+import { ModalAssignParent } from "../../modals/adminRegisters/modalAsignParent";
 
 function ListStudents() {
   const title = 'ESTUDIANTES'
   const headers = [
     "Nombre", "DNI", "Sexo",
-    "Teléfono", "Correo", "Estado", "Acciones"
+    "Teléfono", "Correo", "Apoderado",  "Parentesco", "Estado", "Acciones"
   ]
 
   const [search, setSearch] = useState("");
@@ -40,13 +42,17 @@ function ListStudents() {
   });
 
   const { openRowId, openRow, closeRow } = useRowToggle();
+  const { openRowId: assignParentRowId, openRow: openAssignParent, closeRow: closeAssignParent } = useRowToggle();
   const { showToast } = useToast();
 
   //obtenemos el id del estudiante para editar
   const editingStudent = students.find((s) => s.idStudent === openRowId) ?? null;
+  const assigningStudent = students.find((s) => s.idStudent === assignParentRowId) ?? null;
 
   //indetificar fila en actividad
   const handleEdit = (student) => openRow(student.idStudent);
+  const handleAssignParent = (student) => openAssignParent(student.idStudent);
+  
   //hook eliminar estudiante
   const handleDelete = (student) => {
     confirm({
@@ -61,6 +67,15 @@ function ListStudents() {
 
   const renderRow = (student, index) => {
     const isActive = openRowId === student.idStudent;
+
+    // requiere que el back incluya studentParents en el select (ver nota abajo)
+    const guardians = student.studentParents ?? [];
+    const guardianNames = guardians.length
+      ? guardians.map((g) => `${g.parent.firstname} ${g.parent.lastname}`).join(", ")
+      : "—";
+    const relationships = guardians.length
+      ? guardians.map((g) => g.relationship).join(", ")
+      : "—";
     return (
       <tr
         key={student.idStudent ?? index}
@@ -78,6 +93,10 @@ function ListStudents() {
         </td>
         <td className="px-6 py-4 whitespace-nowrap">{student.phone || "—"}</td>
         <td className="px-6 py-4 whitespace-nowrap">{student.email || "—"}</td>
+        
+        <td className="px-6 py-4 whitespace-nowrap">{guardianNames}</td>
+        <td className="px-6 py-4 whitespace-nowrap">{relationships}</td>
+
         <td className="px-6 py-4 whitespace-nowrap">
           <span className={`px-3 py-1 rounded-full text-xs ${STATUS_BADGE_COLORS[student.status] ?? "bg-gray-100 text-gray-700"}`}>
             {STATUS_LABELS[student.status] ?? student.status}
@@ -91,6 +110,13 @@ function ListStudents() {
               title="Editar"
             >
               <FaEdit size={18} />
+            </button>
+            <button
+              onClick={() => handleAssignParent(student)}
+              className="text-purple-700 hover:underline"
+              title="Asignar apoderado"
+            >
+              <HiUserGroup size={18} />
             </button>
             <button
               onClick={() => handleDelete(student)}
@@ -117,7 +143,7 @@ function ListStudents() {
 
       <Filters
         search={search}
-        onSearchChange={(val) =>{
+        onSearchChange={(val) => {
           setSearch(val);
           setPage(1);
         }}
@@ -183,6 +209,13 @@ function ListStudents() {
           closeModal={closeRow}
           onSuccess={refetch}
         />
+      )}
+      {assigningStudent && (
+        <ModalAssignParent 
+        student={assigningStudent} 
+        closeModal={closeAssignParent}
+        onSuccess={refetch} 
+      />
       )}
     </div>
   )
