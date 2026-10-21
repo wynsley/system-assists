@@ -12,7 +12,7 @@ function RegisterStudent () {
       <hr className="w-[96%] md:w-[90%] md:max-w-7xl mx-auto text-gray-400 rounded-full mt-1"/>
       <ClassroomRoster/>
     </MyTemplate>
-  )
+  ) 
 }
 
 export {RegisterStudent}

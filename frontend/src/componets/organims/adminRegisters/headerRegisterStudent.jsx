@@ -6,11 +6,13 @@ import { useModal } from "../../../hooks/hookModal/useModal";
 // modales
 import { ModalOptionsRegister } from "../../modals/adminRegisters/modalOptionsRegister";
 import { ModalRegisterStudent } from "../../modals/adminRegisters/modalRegisterStudents";
+import { ModalImportStudents } from "../../modals/adminRegisters/modalImportStudents";
 
 function HeaderRegisterStudent() {
 
   const modalOptionsRegister = useModal();
   const modalRegisterStudents = useModal();
+  const modalImportStudents = useModal();
 
   //Abrir el modal de opciones de registro
   const handleOpenOptions = () => {
@@ -23,7 +25,11 @@ function HeaderRegisterStudent() {
     modalRegisterStudents.openModal();
   };
 
-  //Arbir el modal de crear grado y secciones
+  //Abrir el modal de importar estudiantes
+  const handleImportStudents = () => {
+    modalOptionsRegister.closeModal();
+    modalImportStudents.openModal()
+  }
   
   return (
     <section className="mt-8 flex items-center justify-between
@@ -47,6 +53,7 @@ function HeaderRegisterStudent() {
               <ModalOptionsRegister
                 closeModal={modalOptionsRegister.closeModal}
                 onRegisterStudent={handleOpenRegisterStudent}
+                onImportStudents={handleImportStudents}
               />
           )}
 
@@ -55,6 +62,14 @@ function HeaderRegisterStudent() {
                 closeModal={modalRegisterStudents.closeModal}
               />
           )}
+
+          {
+            modalImportStudents.isOpen && (
+              <ModalImportStudents
+              closeModal={modalImportStudents.closeModal}
+            />
+            )
+          }
 
     </section>
   );
