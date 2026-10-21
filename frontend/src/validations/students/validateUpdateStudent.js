@@ -1,88 +1,59 @@
-import Joi from "joi"
+import Joi from "joi";
+import { STUDENT_STATUSES } from "./validateRegisterStudent";
 
-const STUDENT_STATUSES = [
-  "ACTIVO", "INACTIVO", "SUSPENDIDO",
-  "EXPULSADO", "TRANSFERIDO", "GRADUADO", "RETIRADO"
-];
+const NAME_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü\s]+$/;
 
 const ValidationUpdateStudent = Joi.object({
-  firstname: Joi
-    .string()
-    .trim()
-    .pattern(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/)
-    .min(2)
-    .max(50)
+  firstname: Joi.string().trim().pattern(NAME_REGEX).min(2).max(50).required()
     .messages({
-      'string.min': 'El nombre debe tener mínimo 2 caracteres',
-      'string.max': 'El nombre no puede tener más de 50 caracteres',
-      'string.pattern.base': 'El nombre solo puede contener letras y espacios'
-    })
-    .optional(),
-
-  lastname: Joi
-    .string()
-    .trim()
-    .pattern(/^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/)
-    .min(2)
-    .max(50)
-    .messages({
-      'string.min': 'El apellido debe tener mínimo 2 caracteres',
-      'string.max': 'El apellido no puede tener más de 50 caracteres',
-      'string.pattern.base': 'El apellido solo puede contener letras y espacios'
-    })
-    .optional(),
-
-  // dni sigue siendo requerido incluso en update (así está definido en el backend)
-  dni: Joi
-    .string()
-    .trim()
-    .length(8)
-    .pattern(/^[0-9]+$/)
-    .required()
-    .messages({
-      'string.empty': 'El DNI es requerido',
-      'string.length': 'El DNI debe tener 8 caracteres',
-      'string.pattern.base': 'El DNI debe ser numérico',
-      'any.required': 'El DNI es requerido'
+      "string.empty": "El nombre es requerido",
+      "string.min": "El nombre debe tener mínimo 2 caracteres",
+      "string.max": "El nombre no puede tener más de 50 caracteres",
+      "string.pattern.base": "El nombre solo puede contener letras y espacios",
+      "any.required": "El nombre es requerido",
     }),
 
-  gender: Joi
-    .string()
-    .valid('M', 'F', 'O')
+  lastname: Joi.string().trim().pattern(NAME_REGEX).min(2).max(50).required()
     .messages({
-      'any.only': 'El sexo debe ser (M)asculino, (F)emenino u (O)tro'
-    })
-    .optional(),
+      "string.empty": "El apellido es requerido",
+      "string.min": "El apellido debe tener mínimo 2 caracteres",
+      "string.max": "El apellido no puede tener más de 50 caracteres",
+      "string.pattern.base": "El apellido solo puede contener letras y espacios",
+      "any.required": "El apellido es requerido",
+    }),
 
-  phone: Joi
-    .string()
-    .trim()
-    .custom((value) => value.replace(/\s+/g, ""))
-    .pattern(/^\+51\d{9}$/)
+  dni: Joi.string().trim().pattern(/^\d{8}$/).required()
     .messages({
-      'string.pattern.base': 'El teléfono debe tener formato +51 9XX XXX XXX'
-    })
-    .allow('')
-    .optional(),
+      "string.empty": "El DNI es requerido",
+      "string.pattern.base": "El DNI debe tener exactamente 8 dígitos numéricos",
+      "any.required": "El DNI es requerido",
+    }),
 
-  email: Joi
-    .string()
-    .trim()
-    .email()
-    .lowercase()
+  gender: Joi.string().valid("M", "F", "O").required()
     .messages({
-      'string.email': 'El correo no tiene un formato válido'
-    })
-    .allow('')
-    .optional(),
+      "any.only": "El sexo debe ser (M)asculino, (F)emenino u (O)tro",
+      "string.empty": "El sexo es requerido",
+      "any.required": "El sexo es requerido",
+    }),
 
-  status: Joi
-    .string()
-    .valid(...STUDENT_STATUSES)
+  status: Joi.string().valid(...STUDENT_STATUSES).required()
     .messages({
-      'any.only': `El estado debe ser ${STUDENT_STATUSES.join(', ')}`
-    })
-    .optional(),
-})
+      "any.only": `El estado debe ser: ${STUDENT_STATUSES.join(", ")}`,
+      "string.empty": "El estado es requerido",
+      "any.required": "El estado es requerido",
+    }),
 
-export { ValidationUpdateStudent }
+  phone: Joi.string().trim().replace(/\s+/g, "").empty("").allow(null)
+    .pattern(/^9\d{8}$/)
+    .messages({
+      "string.pattern.base": "El teléfono debe tener 9 dígitos y empezar con 9",
+    }),
+
+  email: Joi.string().trim().lowercase().email({ tlds: false }).max(100).empty("").allow(null)
+    .messages({
+      "string.email": "El correo no tiene un formato válido",
+      "string.max": "El correo no puede tener más de 100 caracteres",
+    }),
+});
+
+export { ValidationUpdateStudent };
