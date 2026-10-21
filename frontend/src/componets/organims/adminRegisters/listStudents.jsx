@@ -5,6 +5,8 @@ import { HiUserGroup } from "react-icons/hi2";
 import { Table } from "../tableReusable";
 import { GENDER_LABELS, STATUS_LABELS, STATUS_BADGE_COLORS } from "../../../config/studentLabels";
 import { Paginations } from "../../molecules/adminRegisters/Paginations";
+import { Filters } from "../../molecules/adminRegisters/filters";
+import { DownloadQr } from "../../molecules/adminRegisters/downloadQR";
 //Hooks
 import { useState } from "react";
 import { useStudents } from "../../../hooks/hoocksAdmin/useStudents";
@@ -12,7 +14,6 @@ import { useDebounce } from "../../../hooks/hookGlobals/useDebounce";
 import { useRowToggle } from "../../../hooks/hooksAssistant/useRowToggle";
 import { useToast } from "../../../hooks/hookGlobals/useToast";
 import { useConfirm } from "../../../hooks/hoocksAdmin/useConfirmDelete";
-import { Filters } from "../../molecules/adminRegisters/filters";
 //Modals
 import { ModalRegisterStudent } from "../../modals/adminRegisters/modalRegisterStudents";
 import { ModalConfirm } from "../../modals/adminRegisters/modalConfirmDelete";
@@ -22,7 +23,7 @@ function ListStudents() {
   const title = 'ESTUDIANTES'
   const headers = [
     "Nombre", "DNI", "Sexo",
-    "Teléfono", "Correo", "Apoderado",  "Parentesco", "Estado", "Acciones"
+    "Teléfono", "Correo", "Apoderado", "Parentesco", "Estado", "Acciones"
   ]
 
   const [search, setSearch] = useState("");
@@ -52,7 +53,7 @@ function ListStudents() {
   //indetificar fila en actividad
   const handleEdit = (student) => openRow(student.idStudent);
   const handleAssignParent = (student) => openAssignParent(student.idStudent);
-  
+
   //hook eliminar estudiante
   const handleDelete = (student) => {
     confirm({
@@ -76,6 +77,8 @@ function ListStudents() {
     const relationships = guardians.length
       ? guardians.map((g) => g.relationship).join(", ")
       : "—";
+
+    const cell = "px-3 py-3 text-sm"
     return (
       <tr
         key={student.idStudent ?? index}
@@ -84,25 +87,25 @@ function ListStudents() {
           ${isActive ? "bg-blue-100" : "hover:bg-gray-50"}
         `}
       >
-        <td className="px-6 py-4 whitespace-nowrap font-medium">
+        <td className={`${cell} font-medium`}>
           {student.firstname} {student.lastname}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">{student.dni}</td>
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className={`${cell}`}>{student.dni}</td>
+        <td className={`${cell}`}>
           {GENDER_LABELS[student.gender] ?? student.gender}
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">{student.phone || "—"}</td>
-        <td className="px-6 py-4 whitespace-nowrap">{student.email || "—"}</td>
-        
-        <td className="px-6 py-4 whitespace-nowrap">{guardianNames}</td>
-        <td className="px-6 py-4 whitespace-nowrap">{relationships}</td>
+        <td className={`${cell}`}>{student.phone || "—"}</td>
+        <td className={`${cell}`}>{student.email || "—"}</td>
 
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className={`${cell}`}>{guardianNames}</td>
+        <td className={`${cell}`}>{relationships}</td>
+
+        <td className={`${cell}`}>
           <span className={`px-3 py-1 rounded-full text-xs ${STATUS_BADGE_COLORS[student.status] ?? "bg-gray-100 text-gray-700"}`}>
             {STATUS_LABELS[student.status] ?? student.status}
           </span>
         </td>
-        <td className="px-6 py-4 whitespace-nowrap">
+        <td className={`${cell}`}>
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleEdit(student)}
@@ -118,6 +121,9 @@ function ListStudents() {
             >
               <HiUserGroup size={18} />
             </button>
+            <DownloadQr
+              student={student}
+            />
             <button
               onClick={() => handleDelete(student)}
               className="text-red-600 hover:underline"
@@ -211,11 +217,11 @@ function ListStudents() {
         />
       )}
       {assigningStudent && (
-        <ModalAssignParent 
-        student={assigningStudent} 
-        closeModal={closeAssignParent}
-        onSuccess={refetch} 
-      />
+        <ModalAssignParent
+          student={assigningStudent}
+          closeModal={closeAssignParent}
+          onSuccess={refetch}
+        />
       )}
     </div>
   )
