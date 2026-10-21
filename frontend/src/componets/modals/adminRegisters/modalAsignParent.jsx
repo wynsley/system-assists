@@ -41,23 +41,39 @@ function ModalAssignParent({ student, closeModal, onSuccess }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!debouncedSearch) {
+    if (!debouncedSearch.trim() || selectedParent) {
       setParentResults([]);
       return;
     }
+    let cancelled = false;
+
     const search = async () => {
       setSearchLoading(true);
-      const params = new URLSearchParams({ search: debouncedSearch, role: "PARENT", limit: "10" });
-      const { ok, data } = await apiFetch(`/user?${params.toString()}`, "GET");
-      if (ok && data?.success) {
-        const assignedIds = new Set(relations.map((r) => r.parent.idUser));
-        setParentResults((data.data ?? []).filter((u) => !assignedIds.has(u.idUser)));
+      try {
+        const params = new URLSearchParams({
+          search: debouncedSearch.trim(),
+          role: "PARENT",
+          limit: "10",
+        });
+        const { ok, data } = await apiFetch(`/user?${params.toString()}`, "GET");
+        console.log("búsqueda padres:", ok, data); // temporal, para depurar
+        if (!cancelled && ok && data?.success) {
+          setParentResults(data.data ?? []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (!cancelled) setSearchLoading(false);
       }
-      setSearchLoading(false);
     };
-    search();
-  }, [debouncedSearch, relations]);
 
+    search();
+    return () => { cancelled = true; };
+  }, [debouncedSearch, selectedParent]);
+
+  const assignedIds = new Set(relations.map((r) => r.parent?.idUser));
+  const availableParents = parentResults.filter((u) => !assignedIds.has(u.idUser));
+  
   const handleAssign = async () => {
     setError("");
     if (!selectedParent) {
@@ -102,7 +118,7 @@ function ModalAssignParent({ student, closeModal, onSuccess }) {
     <div className="fixed inset-0 flex justify-center items-center bg-black/50 z-100 transition-opacity duration-300">
       <div
         ref={modalRef}
-        className="flex flex-col gap-5 w-[25em] md:w-[40em] max-w-xl bg-white rounded-md shadow-xl p-6"
+        className="flex flex-col gap-5 w-[25em] md:w-[30em] max-w-xl bg-white rounded-md shadow-xl p-6"
       >
         <div className="relative">
           <TitleAndDescaription
@@ -160,7 +176,7 @@ function ModalAssignParent({ student, closeModal, onSuccess }) {
 
           {!selectedParent && parentResults.length > 0 && (
             <ul className="border border-borderC rounded-md max-h-40 overflow-y-auto">
-              {parentResults.map((u) => (
+              {availableParents.map((u) => (
                 <li
                   key={u.idUser}
                   onClick={() => {
