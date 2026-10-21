@@ -1,3 +1,13 @@
+const studentParentSelect = {
+  select: {
+    idStudentParent: true,
+    relationship: true,
+    parent: {
+      select: { idUser: true, firstname: true, lastname: true, email: true },
+    },
+  },
+};
+
 const studentFields = {
   status: [
     "ACTIVO",
@@ -28,6 +38,8 @@ const studentFields = {
     status: true,
     createdAt: true,
     updatedAt: true,
+    studentParents : studentParentSelect,
+    
     // nuevo — aula activa del estudiante
     classroomStudents: {
       where: {
