@@ -23,7 +23,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
   const [gender, setGender] = useState(initialData?.gender ?? '')
   const [phone, setPhone] = useState(initialData?.phone ?? '')
   const [email, setEmail] = useState(initialData?.email ?? '')
-  const [status, setStatus] = useState(initialData?.status ?? '')
+  const [status, setStatus] = useState(initialData?.status ?? 'ACTIVO')
   const [idClassroom, setIdClassroom] = useState(
     initialData?.classroomStudents?.[0]?.idClassroom
       ? String(initialData.classroomStudents[0].idClassroom)
@@ -69,7 +69,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
   const resetForm = () => {
     setFirstname(''); setLastname(''); setDni('');
     setGender(''); setPhone(''); setEmail('');
-    setStatus(''); setIdClassroom(''); setError('');
+    setStatus('ACTIVO'); setIdClassroom(''); setError('');
   }
 
   const formFields = [
@@ -165,9 +165,7 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     ],
   ]
 
-  const doSubmit = async () => {
-    const payload = { firstname, lastname, dni, gender, phone, email, status };
-
+  const doSubmit = async (payload) => {
     try {
       startLoading();
 
@@ -230,17 +228,28 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
     e.preventDefault();
     setError('');
 
-    const payload = { firstname, lastname, dni, gender, phone, email, status };
-
+    let payload;
     try {
-      await schema.validateAsync(payload);
+
+      payload = await schema.validateAsync(
+        { firstname, lastname, dni, gender, phone, email, status },
+        { stripUnknown: true }
+      );
     } catch (err) {
       setError(err.details ? err.details[0].message : err.message);
       return;
     }
 
-    // Si en edición se está cambiando de aula, pedir confirmación explícita antes de guardar
-    const classroomChanged = isEdit && idClassroom && currentClassroomId && currentClassroomId !== idClassroom;
+    if (isEdit) {
+      payload = {
+        ...payload,
+        phone: payload.phone ?? null,
+        email: payload.email ?? null,
+      };
+    }
+
+    const classroomChanged =
+      isEdit && idClassroom && currentClassroomId && currentClassroomId !== idClassroom;
 
     if (classroomChanged) {
       const selected = classrooms.find((c) => String(c.idClassroom) === idClassroom);
@@ -256,13 +265,13 @@ function ModalRegisterStudent({ closeModal, mode = "create", initialData = null,
       confirm({
         title: `¿Cambiar de aula a ${firstname} ${lastname}?`,
         description: `Pasará de ${oldLabel} a ${newLabel}. Si el auxiliar responsable cambia, su nota de comportamiento del bimestre actual se reiniciará a 0.`,
-        onConfirm: doSubmit,
+        onConfirm: () => doSubmit(payload),   
       });
       return;
     }
 
-    await doSubmit();
-  }
+    await doSubmit(payload);
+  };
 
   return (
     <>
